@@ -1,4 +1,4 @@
-// Converts the given number to a new number within a given interval
+// Converts the given number to a new number within a given interval inclusively
 //
 // NOTE: given number must be <= 2^128
 
@@ -12,7 +12,7 @@ module tuner(
 	output [127:0] tunedNumber
 	);
 
-	wire [127:0] total = max - min + 1;  // Total possibles numbers
+	wire [127:0] total = max - min;  // Total possibles numbers
 	wire [127:0] piece = ({128'd2}**power) / total;  // total*piece = 2^power
-	assign tunedNumber = (({128'd2}**power) >= number) ? number / piece : 128'd0;
+	assign tunedNumber = (({128'd2}**power) >= number) ? (number / piece) + min : 128'd0;
 endmodule

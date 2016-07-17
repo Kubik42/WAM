@@ -24,39 +24,44 @@ run 2 ns
 force {number} 101001010
 run 2 ns
 
-# 2^16 given 7280 between 0-8  --> 0
-force {number} 1110001110000
+# 2^16 given 8191 between 0-8  --> 0
+force {number} 1111111111111
 run 2 ns
 
-# 2^16 given 7281 between 0-8  --> 1
-force {number} 1110001110001
+# 2^16 given 8192 between 0-8  --> 1
+force {number} 10000000000000
 run 2 ns
 
-# 2^16 given 7282 between 0-8  --> 1
-force {number} 1110001110010
+# 2^16 given 8193 between 0-8  --> 1
+force {number} 10000000000001
 run 2 ns
 
-# 2^16 given 36405 between 0-8  --> 5
+# 2^16 given 36405 between 0-8  --> 4
 force {number} 1000111000110101
 run 2 ns
 
-# 2^16 given 36405 between 8-22  --> 8
+# 2^16 given 36405 between 8-22  --> 15
 force {min} 1000
 force {max} 10110
 force {number} 1000111000110101
 run 2 ns
 
-# 2^8 given 132 between 8-22  --> 7
+# 2^8 given 132 between 8-22  --> 15
 force {power} 1000
 force {min} 1000
 force {max} 10110
 force {number} 10000100
 run 2 ns
 
-# 2^8 given 256 between 8-22  --> 17
+# 2^8 given 256 between 8-22  --> 22
 force {number} 100000000
+run 2 ns
+
+# 2^8 given 8 between 8-22  --> 8
+force {number} 1000
 run 2 ns
 
 # 2^8 given 257 between 8-22  --> error --> 0
 force {number} 100000001
 run 2 ns
+
