@@ -19,7 +19,7 @@ module rng(
 	
 	always @(posedge clk or negedge reset) begin
 		if (~reset) begin
-			LFRS_reg <= 16'd65535;  // We can't reset to a zero state
+			LFRS_reg <= 16'd1;  // We can't reset to a zero state
 			count <= 4'd0;
 		end
 		else begin
