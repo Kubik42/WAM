@@ -46,25 +46,25 @@ module wam(
 	always @(*) 
 	begin : Difficulty
 		case (difficulty)
-			0001: begin  // Level 1: 2 seconds
-				light_between <= 25000000 - 1;
-				light_on <= 25000000 - 1;
+			0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
+				light_between <= 28'd99_999_999;
+				light_on <= 28'd99_999_999;
 			end
 			0010: begin  // Level 2: 1 second
-				light_between <= 50000000 - 1;
-				light_on <= 50000000 - 1;
+				light_between <= 28'd49_999_999;
+				light_on <= 28'd49_999_999;
 			end
-			0100: begin  // Level 3: 0.50 seconds, 1 second countdown
-				light_between <= 100000000 - 1;
-				light_on <= 50000000 - 1;
+			0100: begin  // Level 3: 0.50 seconds (count up to 25_000_000 - 1), 1 second countdown
+				light_between <= 28'd24_999_999;
+				light_on <= 28'd49_999_999;
 			end
-			1000: begin  // Level 4: 0.25 seconds, 0.50 second countdown
-				light_between <= 200000000 - 1;
-				light_on <= 100000000 - 1;
+			1000: begin  // Level 4: 0.25 seconds (count up to 12_500_000 - 1), 0.50 second countdown
+				light_between <= 28'd12_499_999;
+				light_on <= 28'd24_999_999;
 			end
-			default: begin  // Same as level 2
-				light_between <= 50000000 - 1;
-				light_on <= 50000000 - 1;
+			default: begin  // Same as Level 2: 1 second
+				light_between <= 28'd49_999_999;
+				light_on <= 28'd49_999_999;
 			end
 		endcase
 	end
