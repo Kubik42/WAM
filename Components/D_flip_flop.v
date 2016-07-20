@@ -6,10 +6,8 @@ module dff(
 	input data
 	input clk
 	input reset
-	output q
+	output reg q
 	);
-
-	reg q;
 
 	always @(posedge clk or negedge reset) begin
 		if (~reset)
