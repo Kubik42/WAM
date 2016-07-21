@@ -18,8 +18,7 @@ module rng(
 	assign feedback = LFRS_reg[15] ^ LFRS_reg[14] ^ LFRS_reg[12] ^ LFRS_reg[3];
 	
 	always @(posedge clk or negedge reset) begin
-		if (~reset) begin
-			LFRS_reg <= 16'd1;  // We can't reset to a zero state
+		if (~reset) begin  // DO NOT RESET THE SEED
 			count <= 4'd0;
 		end
 		else begin
