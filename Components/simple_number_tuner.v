@@ -9,6 +9,6 @@ module tuner(
 	output [16:0] tuned_num
 	);
 
-	localparam [16:0] piece = 17'd65536;
-	assign tuned_num = num / piece;
+	localparam [16:0] piece = 17'd65536 / 17'd8;
+	assign tuned_num = num / piece;	
 endmodule
