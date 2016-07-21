@@ -12,7 +12,7 @@ module wam(
 	input [0:0] KEY,
 	input [9:0] SW,
 	input CLOCK_50,
-	input [2:0] key_matrix_column,
+	input [2:0] key_matrix_row,
 	output reg [8:0] LEDR
 	);
 
@@ -106,7 +106,7 @@ module wam(
 						.lights(LEDR));
 
 	// Keypad controller
-	keypad_controller KC(.column(key_matrix_column),
+	keypad_controller KC(.row(key_matrix_row),
 						 .clk(CLOCK_50),
 						 .reset);
 
