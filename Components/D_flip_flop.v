@@ -6,13 +6,13 @@ module dff(
 	input data
 	input clk
 	input reset
-	output reg q
+	output reg Q
 	);
 
 	always @(posedge clk or negedge reset) begin
 		if (~reset)
-			q <= 1'b0;
+			Q <= 1'b0;
 		else
-			q <= data;
+			Q <= data;
 	end
 endmodule
