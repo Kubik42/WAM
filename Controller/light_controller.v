@@ -13,13 +13,8 @@ module light_controller(
 	input start_light;
 	input clk,
 	input reset,
-	output reg [8:0] output_lights
+	output reg [8:0] lights
 	);
-
-	// Lights
-	wire [15:0] rand_num;  // 16-bit randomly generated number
-	wire [16:0] light,     // light on board
-	reg [8:0] lights; // light signals to output
 
 	// Time between subsequent light flicks
 	wire [27:0] counter_btwn;
@@ -51,6 +46,10 @@ module light_controller(
 	assign light_onoff = (counter_on == 28'd0) ? 0 : 1;
 
 	// Light generation --------------------------------------------------------
+
+	// Lights
+	wire [15:0] rand_num;  // 16-bit randomly generated number
+	wire [16:0] light;     // Light on board
 
 	// 16-bit random number generator
 	rng RNG(.seed(16'b1), 
