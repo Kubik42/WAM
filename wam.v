@@ -31,7 +31,7 @@ module wam(
 	begin: state_table
 		case(current_state)
 			SETUP: next_state = play ? PLAY : SETUP;
-			PLAYER: next_state = play ? RESTART : PLAY;
+			PLAY: next_state = play ? RESTART : PLAY;
 			RESTART: next_state = PLAY;
 		endcase
 	end
