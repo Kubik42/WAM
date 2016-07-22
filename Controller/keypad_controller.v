@@ -56,7 +56,17 @@ module keypad_controller(
     assign clk_31Hz = (counter_31Hz == 15'd0) ? 1 : 0; 
 
     // -------------------------------------------------------------------------
+    
+    // 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
+    wire [1:0] row_key;
+    wire [1:0] column_key;
 
+    encoder ENC(.row(~row),
+                .key(row_key));
+
+    decoder DEC(.in(counter),
+                .column(column_key));
+                
     // Key debouncer
     debouncer DEB(.row(row),
                 .clk(clk_183Hz),
@@ -70,7 +80,7 @@ module keypad_controller(
 
     // Valid key register
     valkeyreg VALKEYREG(.clk(key_down),
-                        .reset(),
+                        .reset(reset),
                         .valid_key(valid_key));
 
     // Counter
@@ -79,19 +89,12 @@ module keypad_controller(
     counter C(.clk(clk_31Hz),
               .counter(counter));
 
-
-    // 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
-    wire [1:0] row_key;
-    wire [1:0] column_key;
-
-    encoder ENC(.row(~row),
-                .key(row_key));
-
-    decoder DEC(.in(counter),
-                .column(column_key));
-
-    assign column = ~column_key;
-    assign key = ((2'd3)*{2'b00, row_key} + {2'b00, column_key}); 
+    always @(*)
+        if (valid_key) begin
+            column <= ~column_key; 
+            key <= ((2'd3)*{2'b00, row_key} + {2'b00, column_key}); 
+        end
+    end
 endmodule
 
 // 2 bit synchronous counter, resets at 11
@@ -105,7 +108,7 @@ module counter(
            .reset(~(counter[0] & counter[1])),
            .Q(counter[0]));
 
-    tff F1(.data(1'b1 & counter[0]),
+    tff F1(.data(counter[0]),
            .clk(clk),
            .reset((~(counter[0] & counter[1])),
            .Q(counter[1]));
