@@ -12,7 +12,8 @@ module light_controller(
 	input load_seed,
 	input clk,
 	input reset,
-	output reg [8:0] lights
+	output reg [8:0] lights,
+	output reg [3:0] position // Position of the LED that is on (0-8)
 	);
 
 	// Lights
@@ -62,7 +63,9 @@ module light_controller(
 				.tuned_num(light));
 
 	// ----------------=--------------------------------------------------------
-
+	
+	assign position = light[3:0]; 
+	
 	always @(posedge clk or negedge reset)
 	begin: Flick
 		if (~reset)  begin  // Turn off all lights			
