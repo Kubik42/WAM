@@ -1,5 +1,7 @@
 # Set the working dir, where all compiled Verilog goes.
 vlib work
+# Set the working dir, where all compiled Verilog goes.
+vlib work
 
 # Compile all verilog modules in mux.v to working dir;
 # could also have multiple verilog files.
@@ -19,6 +21,9 @@ force {reset} 0
 run 5ns
 
 force {reset} 1
-force {enable} 1
+force {load} 1
+run 10ns
+
+force {load} 0
 run 400ns
 
