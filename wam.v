@@ -143,18 +143,34 @@ module wam(
 	end
 
 	// -------------------------------------------------------------------------
-
+	
+	reg [3:0] light_pos;
+	reg [3:0] key_pressed_pos;
+	
 	// Light controller
 	light_controller LC(.light_on(light_on),
 						.light_between(light_between),
 						.load_seed(load_seet),
 						.clk(CLOCK_50),
 						.reset(reset),
-						.lights(LEDR));
-
+						.lights(LEDR),
+						.position(light_pos));
+	
 	// Keypad controller
 	keypad_controller KC(.row(key_matrix_row),
 						 .clk(CLOCK_50),
-						 .reset);
+						 .reset(reset),
+						 .valid_key(),
+						 .column(),
+						 .key(),
+						 .position(key_pressed_pos));
+	
+	always @(*) // Need reconsideration maybe negedge light_onoff from light controller
+	begin: Add points
+		if (light_pos == key_pressed_pos) begin
+			normal_points <= normal_points + 1;
+			extended_points <= extended_points + difficulty;
+		end
+	end
 
 endmodule
