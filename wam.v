@@ -23,9 +23,9 @@ module wam(
 
 	wire [1:0] current_state, next_state;
 
-	localparam [1:0] SETUP   = 2'd0,
-					 PLAY    = 2'd1,
-					 RESTART = 2'd2;
+	localparam SETUP   = 2'd0,
+			PLAY    = 2'd1,
+			RESTART = 2'd2;
 
 	always @(*)
 	begin: state_table
@@ -41,19 +41,23 @@ module wam(
 		// By default
 		load_seed = 1'b0;
 		reset = 1'b0;
+		start_light = 1'b0;
 
 		case(current_state)
 			SETUP: begin
 				load_seed = 1'b1;  // Seed is loaded only once
 				reset = 1'b1;
+				start_light = 1'b0;
 			end
 			PLAY: begin
 				load_seed = 1'b0;
 				reset = 1'b1;
+				start_light = 1'b1;
 			end
 			RESTART: begin
 				load_seed = 1'b0;
 				reset = 1'b0;
+				start_light = 1'b0;
 			end
 		endcase
 	end
@@ -143,14 +147,24 @@ module wam(
 	end
 
 	// -------------------------------------------------------------------------
-
+	
+	wire [8:0] light_signals; 
+	
 	// Light controller
 	light_controller LC(.light_on(light_on),
 						.light_between(light_between),
-						.load_seed(load_seet),
+						.load_seed(load_seed),
 						.clk(CLOCK_50),
 						.reset(reset),
-						.lights(LEDR));
+						.lights(light_signals));
+	
+	// Light up the LEDs only when in PLAY state
+	always @(*)
+	begin
+		if(start_light) begin
+			LEDR <= light_signals;
+		end
+	end
 
 	// Keypad controller
 	keypad_controller KC(.row(key_matrix_row),
