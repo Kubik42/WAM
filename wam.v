@@ -148,15 +148,14 @@ module wam(
 
 	// -------------------------------------------------------------------------
 	
-	wire [8:0] light_signals; 
-	
 	// Light controller
 	light_controller LC(.light_on(light_on),
 						.light_between(light_between),
 						.load_seed(load_seed),
+						.start_light(start_light)
 						.clk(CLOCK_50),
 						.reset(reset),
-						.lights(light_signals));
+						.lights(LEDR));
 
 	// Keypad controller
 	keypad_controller KC(.row(key_matrix_row),
