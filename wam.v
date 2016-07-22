@@ -16,7 +16,59 @@ module wam(
 	output reg [8:0] LEDR
 	);
 
-	// Basic game settings -----------------------------------------------------------------------------
+	assign play = ~KEY[0];
+	reg load_seed, reset;
+
+	// States ------------------------------------------------------------------
+
+	wire [1:0] current_state, next_state;
+
+	localparam [1:0] SETUP   = 2'd0,
+					 PLAY    = 2'd1,
+					 RESTART = 2'd2;
+
+	always @(*)
+	begin: state_table
+		case(current_state)
+			SETUP: next_state = play ? PLAY : SETUP;
+			PLAYER: next_state = play ? RESTART : PLAY;
+			RESTART: next_state = PLAY;
+		endcase
+	end
+
+	always @(*)
+	begin: game_setup
+		// By default
+		load_seed = 1'b0;
+		reset = 1'b0;
+
+		case(current_state)
+			SETUP: begin
+				load_seed = 1'b1;  // Seed is loaded only once
+				reset = 1'b1;
+			end
+			PLAY: begin
+				load_seed = 1'b0;
+				reset = 1'b1;
+			end
+			RESTART: begin
+				load_seed = 1'b0;
+				reset = 1'b0;
+			end
+		endcase
+	end
+
+	always @(posedge CLOCK_50 or negedge play)
+	begin: game
+		if (play) begin
+			current_state <= RESTART;
+		end
+		else begin
+			current_state <= next_state;
+		end
+	end
+
+	// Basic game settings -----------------------------------------------------
 
 	// Switches
 	wire [3:0] difficulty;
@@ -90,11 +142,12 @@ module wam(
 		endcase
 	end
 
-	// ------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 
 	// Light controller
 	light_controller LC(.light_on(light_on),
 						.light_between(light_between),
+						.load_seed(load_seet),
 						.clk(CLOCK_50),
 						.reset(reset),
 						.lights(LEDR));
