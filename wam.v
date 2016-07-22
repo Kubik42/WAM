@@ -157,14 +157,6 @@ module wam(
 						.clk(CLOCK_50),
 						.reset(reset),
 						.lights(light_signals));
-	
-	// Light up the LEDs only when in PLAY state
-	always @(*)
-	begin
-		if(start_light) begin
-			LEDR <= light_signals;
-		end
-	end
 
 	// Keypad controller
 	keypad_controller KC(.row(key_matrix_row),

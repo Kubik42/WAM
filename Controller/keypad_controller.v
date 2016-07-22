@@ -27,9 +27,9 @@ module keypad_controller(
 	wire [5:0] counter_1Mhz;
 	wire [12:0] counter_183Hz;
 	wire [14:0] counter_31Hz;
-	localparam counter_max_1Hz = 6'd49,       // Relative to 50Mhz
-			counter_max_183Hz = 13'd5464,  // Relative to 1MHz
-			counter_max_31Hz = 15'd32257;  // Relative to 1MHz			  
+	localparam [5:0]  counter_max_1MHz = 6'd49,       // Relative to 50Mhz
+			   [12:0] counter_max_183Hz = 13'd5464  // Relative to 1MHz
+			   [14:0] counter_max_31Hz = 15'd32257;  // Relative to 1MHz			  
 
 	clock_divider CD_1Hz(.counter_max(counter_max_1Hz),
 						 .clk(clk),
@@ -56,11 +56,7 @@ module keypad_controller(
 	assign clk_31Hz = (counter_31Hz == 15'd0) ? 1 : 0; 
 
 	// -------------------------------------------------------------------------
-	
-	wire [1:0] row_key;
-	wire [1:0] column_key;
-	wire key_down;
-	
+
 	// Key debouncer
 	debouncer DEB(.row(row),
 				.clk(clk_183Hz),
@@ -74,7 +70,7 @@ module keypad_controller(
 
 	// Valid key register
 	valkeyreg VALKEYREG(.clk(key_down),
-						.reset(reset),
+						.reset(),
 						.valid_key(valid_key));
 
 	// Counter
@@ -82,18 +78,22 @@ module keypad_controller(
 
 	counter C(.clk(clk_31Hz),
 			  .counter(counter));
-	
-	// 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder	  
+
+
+	// 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
+	wire [1:0] row_key;
+	wire [1:0] column_key;
+
 	encoder ENC(.row(~row),
 				.key(row_key));
-				
+
 	decoder DEC(.in(counter),
 				.column(column_key));
 
 	assign column = ~column_key;
 endmodule
 
-// 2 bit synchronous counter, resets after 10
+// 2 bit synchronous counter, resets at 11
 module counter(
 	input clk,
 	output reg [1:0] counter
@@ -104,9 +104,10 @@ module counter(
 		   .reset(~(counter[0] & counter[1])),
 		   .Q(counter[0]));
 
-	tff F1(.data(counter[0]),
+	tff F1(.data(1'b1 & counter[0]),
 		   .clk(clk),
 		   .reset((~(counter[0] & counter[1])),
 		   .Q(counter[1]));
 
+	//assign counter = Q;
 endmodule

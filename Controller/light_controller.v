@@ -29,27 +29,27 @@ module light_controller(
 	wire [27:0] counter_on;
 	
 	// A light should be on or off 
-	wire light_onoff;
+	wire light_on;
 
 	// Frequency divider for turning lights on
 	clock_divider FD_BTWN(.counter_max(light_between),
 						  .clk(clk), 
-						  .enable(~light_onoff),
+						  .enable(~light_on),
 						  .reset(reset),
 						  .counter(counter_btwn));
 
 	// Turn off FD_BTWN and power FD_ON
-	assign light_onoff = (counter_btwn == 28'd0) ? 1 : 0;
+	assign light_on = (counter_btwn == 28'd0) ? 1 : 0;
 
 	// Frequency divider for keeping lights on
 	clock_divider FD_ON(.counter_max(light_on),
 						.clk(clk), 
-						.enable(light_onoff),
+						.enable(light_on),
 						.reset(reset),
 						.counter(counter_on));
 
 	// Turn off FD_ON and power FD_BTWN
-	assign light_onoff = (counter_on == 28'd0) ? 0 : 1;
+	assign light_on = (counter_on == 28'd0) ? 0 : 1;
 
 	// Light generation --------------------------------------------------------
 
@@ -72,9 +72,9 @@ module light_controller(
 			lights <= 0;
 			counter_btwn <= light_between;
 			counter_on <= light_on;
-			light_onoff <= 1'b0;
+			light_on <= 1'b0;
 		end
-		else if (light_onoff) begin  // Turn on a light
+		else if (light_on) begin  // Turn on a light
 			case (light[3:0])
 				4'd0: lights[0] <= 1'b1;
 				4'd1: lights[1] <= 1'b1;
@@ -87,7 +87,7 @@ module light_controller(
 				4'd8: lights[8] <= 1'b1;
 			endcase
 		end
-		else if (~light_onoff) begin  // Turn off a light
+		else if (~light_on) begin  // Turn off a light
 			lights <= 0;
 		end
 	end
