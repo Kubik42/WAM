@@ -13,6 +13,6 @@ module tff(
 		if (~reset)
 			Q <= 1'b0;
 		else if (data)
-			Q <= ~data;
+			Q <= ~Q;
 	end
 endmodule
