@@ -87,31 +87,31 @@ module wam(
 	reg [5:0] total_points;
 
 	// Counters/timers
-	reg [27:0] light_between;  // Time between subsequent light flicks
-	reg [27:0] light_on;  // Time the light will stay on for
+	reg [27:0] time_between;  // Time between subsequent light flicks
+	reg [27:0] time_on;  // Time the light will stay on for
 
 	always @(*) 
 	begin : Difficulty
 		case (difficulty)
 			0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
-				light_between <= 28'd99_999_999;
-				light_on <= 28'd99_999_999;
+				time_between <= 28'd99_999_999;
+				time_on <= 28'd99_999_999;
 			end
 			0010: begin  // Level 2: 1 second
-				light_between <= 28'd49_999_999;
-				light_on <= 28'd49_999_999;
+				time_between <= 28'd49_999_999;
+				time_on <= 28'd49_999_999;
 			end
 			0100: begin  // Level 3: 0.50 seconds (count up to 25_000_000 - 1), 1 second countdown
-				light_between <= 28'd24_999_999;
-				light_on <= 28'd49_999_999;
+				time_between <= 28'd24_999_999;
+				time_on <= 28'd49_999_999;
 			end
 			1000: begin  // Level 4: 0.25 seconds (count up to 12_500_000 - 1), 0.50 second countdown
-				light_between <= 28'd12_499_999;
-				light_on <= 28'd24_999_999;
+				time_between <= 28'd12_499_999;
+				time_on <= 28'd24_999_999;
 			end
 			default: begin  // Same as Level 2: 1 second
-				light_between <= 28'd49_999_999;
-				light_on <= 28'd49_999_999;
+				time_between <= 28'd49_999_999;
+				time_on <= 28'd49_999_999;
 			end
 		endcase
 	end
@@ -149,10 +149,10 @@ module wam(
 	// -------------------------------------------------------------------------
 	
 	// Light controller
-	light_controller LC(.light_on(light_on),
-						.light_between(light_between),
+	light_controller LC(.time_on(time_on),
+						.time_between(time_between),
 						.load_seed(load_seed),
-						.start_light(start_light)
+						.start(start_light)
 						.clk(CLOCK_50),
 						.reset(reset),
 						.lights(LEDR));
