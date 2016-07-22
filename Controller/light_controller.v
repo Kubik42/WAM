@@ -5,6 +5,9 @@
 `include "../Components/random_number_generator.v"
 `include "../Components/simple_number_tuner.v"
 `include "../Components/clock_divider.v"
+// `include "Components/random_number_generator.v"
+// `include "Components/number_tuner.v"
+// `include "Components/clock_divider.v"
 
 module light_controller(
 	input [27:0] light_on,       // Time a light will stay on for
@@ -21,33 +24,32 @@ module light_controller(
 
 	// Time between subsequent light flicks
 	wire [27:0] counter_btwn;
-	wire turn_on_light;
 
 	// Time the light will stay on for
 	wire [27:0] counter_on;
-	wire turn_off_light;
+	
+	// A light should be on or off 
+	wire light_onoff;
 
 	// Frequency divider for turning lights on
 	clock_divider FD_BTWN(.counter_max(light_between),
 						  .clk(clk), 
-						  .enable(~turn_on_light),
+						  .enable(~light_onoff),
 						  .reset(reset),
 						  .counter(counter_btwn));
 
 	// Turn off FD_BTWN and power FD_ON
-	assign turn_on_light = (counter_btwn == 28'd0) ? 1 : 0;
-	assign turn_off_light = (counter_btwn == 28'd0) ? 1: 0;
+	assign light_onoff = (counter_btwn == 28'd0) ? 1 : 0;
 
 	// Frequency divider for keeping lights on
 	clock_divider FD_ON(.counter_max(light_on),
 						.clk(clk), 
-						.enable(turn_off_light),
+						.enable(light_onoff),
 						.reset(reset),
 						.counter(counter_on));
 
 	// Turn off FD_ON and power FD_BTWN
-	assign turn_off_light = (counter_on == 28'd0) ? 0 : 1;
-	assign turn_on_light = (counter_on == 28'd0) ? 0 : 1;
+	assign light_onoff = (counter_on == 28'd0) ? 0 : 1;
 
 	// Light generation --------------------------------------------------------
 
@@ -68,12 +70,11 @@ module light_controller(
 	begin: Flick
 		if (~reset)  begin  // Turn off all lights			
 			lights <= 0;
-			// counter_btwn <= light_between;
-			// turn_on_light <= 1'b0;
-			// counter_on <= light_on;
-			// turn_off_light <= 1'b0;
+			counter_btwn <= light_between;
+			counter_on <= light_on;
+			light_onoff <= 1'b0;
 		end
-		else if (turn_on_light) begin  // Turn on a light
+		else if (light_onoff) begin  // Turn on a light
 			case (light[3:0])
 				4'd0: lights[0] <= 1'b1;
 				4'd1: lights[1] <= 1'b1;
@@ -86,7 +87,7 @@ module light_controller(
 				4'd8: lights[8] <= 1'b1;
 			endcase
 		end
-		else if (turn_on_light) begin  // Turn off a light
+		else if (~light_onoff) begin  // Turn off a light
 			lights <= 0;
 		end
 	end
