@@ -1,6 +1,6 @@
 // Converts the given number to a new number within a given interval inclusively
 //
-// NOTE: given number must be <= 2^16
+// NOTE: given number must be < 2^16
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
@@ -12,7 +12,7 @@ module tuner(
 	output [16:0] tuned_num
 	);
 
-	wire [16:0] total = max - min;  // Total possibles numbers
+	wire [16:0] total = max - min + 1;  // Total possibles numbers
 	wire [16:0] piece = ({17'd2}**power) / total;  // total*piece = 2^power
-	assign tuned_num = (({17'd2}**power) >= num) ? (num / piece) + min : 17'd0;
+	assign tuned_num = (num >= total * piece) ? (num / piece) + min : max;
 endmodule
