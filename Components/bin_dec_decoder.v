@@ -25,5 +25,5 @@ module bdd(
 			4'h9: hex <= 7'b1101111;
 			default: hex = 7'b1111111;
 		endcase
-
+	end
 endmodule
