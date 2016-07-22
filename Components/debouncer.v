@@ -4,7 +4,7 @@
 
 `include "D_flip_flop.v"
 
-module deboncer(
+module debouncer(
 	input [2:0] column,
 	input clk, 
 	output key_down
@@ -21,12 +21,12 @@ module deboncer(
 				 .reset(1'b1),
 				 .Q(Q[0]));
 
-	dff F0(.data(Q[0]),
+	dff F1(.data(Q[0]),
 				 .clk(clk),
 				 .reset(1'b1),
 				 .Q(Q[1]));
 
-	dff F0(.data(Q[1]),
+	dff F2(.data(Q[1]),
 				 .clk(clk),
 				 .reset(1'b1),
 				 .Q(Q[2]));
