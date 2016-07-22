@@ -3,9 +3,9 @@
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
 module dff(
-	input data
-	input clk
-	input reset
+	input data,
+	input clk,
+	input reset,
 	output reg Q
 	);
 
