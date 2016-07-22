@@ -18,8 +18,7 @@ module keypad_controller(
 	input reset,
 	output reg valid_key,
 	output [2:0] column,
-	output [3:0] key, // Row & column of the button pressed
-	output [3:0] position // Position of the button pressed (0-8)
+	output [3:0] key // Position of the button pressed (0-8)
 	);
 
 	// Clock dividers ----------------------------------------------------------
@@ -92,7 +91,7 @@ module keypad_controller(
 				.column(column_key));
 
 	assign column = ~column_key;
-	assign position = (3*row_key + column_key);
+	assign key = (3*row_key + column_key);
 endmodule
 
 // 2 bit synchronous counter, resets at 11
