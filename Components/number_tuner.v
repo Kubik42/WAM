@@ -14,5 +14,5 @@ module tuner(
 
 	wire [16:0] total = max - min + 1;  // Total possibles numbers
 	wire [16:0] piece = ({17'd2}**power) / total;  // total*piece = 2^power
-	assign tuned_num = (num >= total * piece) ? (num / piece) + min : max;
+	assign tuned_num = (num >= total * piece) ? max : (num / piece) + min;
 endmodule
