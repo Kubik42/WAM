@@ -11,7 +11,7 @@ module clock_divider(
 	always @(posedge clk or negedge reset)
 	begin
 		if (~reset)
-			counter <= 0;
+			counter <= counter_max;
 		else if (enable)
 		begin		
 			if (counter == 28'd0)  // Counter reached 0
