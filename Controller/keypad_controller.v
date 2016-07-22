@@ -91,7 +91,7 @@ module keypad_controller(
 				.column(column_key));
 
 	assign column = ~column_key;
-	assign key = (3*row_key + column_key);
+	assign key = ((2'd3)*{2'b00, row_key} + {2'b00, column_key}); 
 endmodule
 
 // 2 bit synchronous counter, resets at 11
