@@ -3,15 +3,14 @@
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
-// `include "./Components/debouncer.v"
-// `include "./Components/clock_divider.v"
-// `include "./Components/D_flip_flop.v"
-// `include "./Components/T_flip_flop.v"
-// `include "./Components/encoder.v"
-// `include "./Components/decoder.v"
-// `include "./Components/key_register.v"
-// `include "./Components/key_down_register.v"
-`include "./Components"
+`include "../Components/debouncer.v"
+`include "../Components/clock_divider.v"
+`include "../Components/D_flip_flop.v"
+`include "../Components/T_flip_flop.v"
+`include "../Components/encoder.v"
+`include "../Components/decoder.v"
+`include "../Components/key_register.v"
+`include "../Components/key_down_register.v"
 
 module keypad_controller(
 	input [2:0] row,

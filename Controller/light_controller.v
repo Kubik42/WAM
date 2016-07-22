@@ -5,9 +5,6 @@
 `include "../Components/random_number_generator.v"
 `include "../Components/simple_number_tuner.v"
 `include "../Components/clock_divider.v"
-// `include "Components/random_number_generator.v"
-// `include "Components/number_tuner.v"
-// `include "Components/clock_divider.v"
 
 module light_controller(
 	input [27:0] light_on,       // Time a light will stay on for

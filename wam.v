@@ -30,18 +30,9 @@ module wam(
 			   [5:0] extended_points = 6'd50;  // 50 light flicks
 	reg [5:0] total_points;
 
-	// Lights
-	wire [15:0] rand_num;  // 16-bit randomly generated number
-	wire [3:0] light;      // light on board
-
 	// Counters/timers
 	reg [27:0] light_between;  // Time between subsequent light flicks
-	wire [27:0] counter_btwn;
-	wire turn_on_light;
-
 	reg [27:0] light_on;  // Time the light will stay on for
-	wire [27:0] counter_on;
-	wire turn_off_light;
 
 	always @(*) 
 	begin : Difficulty
@@ -102,7 +93,10 @@ module wam(
 	// ------------------------------------------------------------------------------------------------
 
 	// Light controller
-	light_controller LC(.CLOCK_50(CLOCK_50),
+	light_controller LC(.light_on(light_on),
+						.light_between(light_between),
+						.clk(CLOCK_50),
+						.reset(reset),
 						.lights(LEDR));
 
 	// Keypad controller

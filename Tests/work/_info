@@ -7,42 +7,80 @@ z2
 !i10e 25
 !i10f 100
 cModel Technology
-Z0 dD:/Users/Dima/Documents/Computer Science/CSC258/WAM/Tests
-vrng
-!s110 1468731388
+dD:/Users/Dima/Documents/Computer Science/CSC258/WAM/Tests
+vclock_divider
+Z0 !s110 1469139086
 !i10b 1
-!s100 C5D9PUW8]z;fKBcgl3gj02
-I]JOTWHS]1lo72M>3:P49D0
+!s100 EaKM7iWo576moEP;Fb1JO1
+I5<a`IiX5cl>4C4HTn?HzK2
 Z1 VDg1SIo80bB@j0V0VzS_@n1
-R0
-w1468728076
-8../random_number_generator.v
-F../random_number_generator.v
-L0 5
-Z2 OV;L;10.4d;61
+Z2 dC:/Users/Dima/Documents/Computer Science/CSC258/WAM/Tests
+w1468900750
+8../Components/clock_divider.v
+F../Components/clock_divider.v
+L0 3
+Z3 OV;L;10.4d;61
 r1
 !s85 0
 31
-!s108 1468731388.000000
-!s107 ../random_number_generator.v|
-!s90 -reportprogress|300|../random_number_generator.v|
+Z4 !s108 1469139086.000000
+Z5 !s107 ../Components/clock_divider.v|../Components/simple_number_tuner.v|../Components/random_number_generator.v|../Controller/light_controller.v|
+Z6 !s90 -reportprogress|300|../Controller/light_controller.v|
+!i113 1
+vlight_controller
+R0
+!i10b 1
+!s100 GChF;:fCU3RRRPUm8W7hC3
+IndKoRAc35C5N?@;e8BG>j2
+R1
+R2
+w1469139021
+8../Controller/light_controller.v
+F../Controller/light_controller.v
+L0 9
+R3
+r1
+!s85 0
+31
+R4
+R5
+R6
+!i113 1
+vrng
+R0
+!i10b 1
+!s100 3>C6D:B2nUgjGinYU`=Dh1
+IHE7PnoDdTE5Mn@^JfSlga2
+R1
+R2
+w1469136836
+8../Components/random_number_generator.v
+F../Components/random_number_generator.v
+L0 5
+R3
+r1
+!s85 0
+31
+R4
+R5
+R6
 !i113 1
 vtuner
-!s110 1468769491
+R0
 !i10b 1
-!s100 LFJfo<Uh7h4L17VUik_UA0
-Ih0EA[NSZfE0Qf9B[KZ1em2
+!s100 ^8i<>di@IKl8kT<>5L=a51
+IDI[WT8jLMALoUe5;zaX5U1
 R1
-dC:/Users/Dima/Documents/Computer Science/CSC258/WAM/Tests
-w1468769196
-8../number_tuner.v
-F../number_tuner.v
-L0 7
 R2
+w1469138902
+8../Components/simple_number_tuner.v
+F../Components/simple_number_tuner.v
+L0 7
+R3
 r1
 !s85 0
 31
-!s108 1468769491.000000
-!s107 ../number_tuner.v|
-!s90 -reportprogress|300|../number_tuner.v|
+R4
+R5
+R6
 !i113 1
