@@ -1,26 +1,31 @@
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
 // Fibonacci LFSR random number generator (generates a number between 0 and 8)
-module lfsr(clk, reset, enable, rndnum);
-	input clk, reset, enable;
-	output reg [3:0] rndnum;			// a random number between 0 and 8
-	 
+module lfsr(
+	input clk, 
+	input reset, 
+	input load,
+	output reg [3:0] rndnum 		// a random number between 0 and 8
+	);			
+	
 	reg [15:0] random;
 	reg [2:0] count; 				// keep track of the shifts
 	wire feedback = random[15] ^ random[14] ^ random[12] ^ random[3];
 	
 	always @(posedge clk or negedge reset)
 		begin
- 			if (!reset)
- 				begin
-  					random <= 15'b000_000_000_000_001; 	// cannot reset to 0
+ 			if (!reset) begin
   					count <= 3'd0;
- 				end
- 			else if(enable)
- 				begin
+ 			end
+ 			else begin
+				if (load) begin
+					random <= 16'd1;
+				end
+				else begin
   					random <= {random[14:0], feedback}; //shift left every clock pulse
   					count <= count + 1'b1;
  				end
+ 			end
 		end
 	always @(*)
 		begin
