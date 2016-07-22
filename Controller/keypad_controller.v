@@ -27,9 +27,9 @@ module keypad_controller(
 	wire [5:0] counter_1Mhz;
 	wire [12:0] counter_183Hz;
 	wire [14:0] counter_31Hz;
-	localparam [5:0] counter_max_1Hz = 6'd49,       // Relative to 50Mhz
-			   [12:0] counter_max_183Hz = 13'd5464,  // Relative to 1MHz
-			   [14:0] counter_max_31Hz = 15'd32257;  // Relative to 1MHz			  
+	localparam counter_max_1Hz = 6'd49,       // Relative to 50Mhz
+			counter_max_183Hz = 13'd5464,  // Relative to 1MHz
+			counter_max_31Hz = 15'd32257;  // Relative to 1MHz			  
 
 	clock_divider CD_1Hz(.counter_max(counter_max_1Hz),
 						 .clk(clk),
