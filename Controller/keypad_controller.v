@@ -100,17 +100,18 @@ endmodule
 // 2 bit synchronous counter, resets at 11
 module counter(
     input clk,
+    input reset,
     output reg [1:0] counter
     );
 
     tff F0(.data(1'b1),
            .clk(clk),
-           .reset(~(counter[0] & counter[1])),
+           .reset(~((~(counter[0] & counter[1])) || (!reset))), // t-flip-flop resets when 0
            .Q(counter[0]));
 
     tff F1(.data(counter[0]),
            .clk(clk),
-           .reset((~(counter[0] & counter[1])),
+           .reset(~((~(counter[0] & counter[1])) || (!reset))),
            .Q(counter[1]));
 
     //assign counter = Q;
