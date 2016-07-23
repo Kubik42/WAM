@@ -1,6 +1,5 @@
 // 6 bit counter
 // Counts down from 60 to 0 (111100 to 0000000)
-// counter[5] is the most significant bit (left most)
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 `include "clock_divider.v"
