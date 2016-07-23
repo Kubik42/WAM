@@ -17,7 +17,7 @@ module wam(
     output [6:0] HEX0, HEX1, HEX2, HEX3
     );
 
-    assign play = ~KEY[0];
+    assign play = KEY[0]; // all modules resets when 0
     reg load_seed, reset;
 
     // States ------------------------------------------------------------------
@@ -65,7 +65,7 @@ module wam(
 
     always @(posedge CLOCK_50 or negedge play)
     begin: game
-        if (play) begin
+        if (!play) begin
             current_state <= RESTART;
         end
         else begin
@@ -83,9 +83,10 @@ module wam(
     assign gamemode = SW[9:6];
 
     // Points
-    localparam [4:0] normal_points = 5'd25,    // 25 light flicks
-               [5:0] extended_points = 6'd50;  // 50 light flicks
-    reg [5:0] total_points;
+    localparam [4:0] normal_max_hits = 5'd25,    // 25 light flicks
+               [5:0] extended_max_hits = 6'd50;  // 50 light flicks
+    reg [5:0] total_points;                     // number of hits
+    reg [5:0] max_hits;                         // maximum number of possible hits
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -124,6 +125,7 @@ module wam(
                 
             end
             0010: begin  // Timed
+                one_min_count TIMED(.clk(CLOCK_50), .reset(play), .start_game(start_game), .counter());
                 
             end
             0100: begin  // Deathmatch (1 miss = you lose)
@@ -139,11 +141,11 @@ module wam(
     end
 
     always @(*)
-    begin: Game points
+    begin: Maximum number of hits               // display on HEX1, HEX0 when in game mode 0001 & 0100
         case(SW[5])
-            0: total_points <= normal_points;
-            1: total_points <= extended_points;
-            default: total_points <= normal_points;
+            0: max_hits <= normal_max_hits;
+            1: max_hits <= extended_max_hits;
+            default: max_hits <= normal_max_hits;
         endcase
     end
 
@@ -155,12 +157,17 @@ module wam(
                         .load_seed(load_seed),
                         .start(start_game)
                         .clk(CLOCK_50),
-                        .reset(reset),
+                        .reset(play),
                         .lights(LEDR));
 
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
                          .reset);
-
+    
+    always @(*)
+    begin: Record hits
+        if ( == )
+            total_points <= total_points + 1'b1;
+    end
 endmodule
