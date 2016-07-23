@@ -13,7 +13,8 @@ module wam(
     input [9:0] SW,
     input CLOCK_50,
     input [2:0] key_matrix_row,
-    output reg [8:0] LEDR
+    output reg [8:0] LEDR,
+    output [6:0] HEX0, HEX1, HEX2, HEX3
     );
 
     assign play = ~KEY[0];
@@ -41,23 +42,23 @@ module wam(
         // By default
         load_seed = 1'b0;
         reset = 1'b0;
-        start_light = 1'b0;
+        start_game = 1'b0;
 
         case(current_state)
             SETUP: begin
                 load_seed = 1'b1;  // Seed is loaded only once
                 reset = 1'b1;
-                start_light = 1'b0;
+                start_game = 1'b0;
             end
             PLAY: begin
                 load_seed = 1'b0;
                 reset = 1'b1;
-                start_light = 1'b1;
+                start_game = 1'b1;
             end
             RESTART: begin
                 load_seed = 1'b0;
                 reset = 1'b0;
-                start_light = 1'b0;
+                start_game = 1'b0;
             end
         endcase
     end
@@ -152,7 +153,7 @@ module wam(
     light_controller LC(.time_on(time_on),
                         .time_between(time_between),
                         .load_seed(load_seed),
-                        .start(start_light)
+                        .start(start_game)
                         .clk(CLOCK_50),
                         .reset(reset),
                         .lights(LEDR));
