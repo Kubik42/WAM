@@ -1,4 +1,4 @@
-// two digit binary to decimal decoder
+// two digit 6-bit binary to decimal decoder 
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
