@@ -26,10 +26,7 @@ module lfsr(
   					count <= count + 1'b1;
  				end
  			end
-		end
-	always @(*)
-		begin
- 			if (count == 3'd4)					// 4 new digits are generated
+			if (count == 3'd4)					// 4 new digits are generated
  				begin
   					count <= 3'd0;
   					if (~random[15]) 			// the first digit is not 1
