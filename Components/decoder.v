@@ -9,12 +9,11 @@ module decoder(
 
 	always @(*)
 	begin: decode
-		case(in)
-			00: column <= 110:
-			01: column <= 101;
-			10: column <= 011;
+		case (in)
+			2'd0: column <= 110;
+			2'd1: column <= 101;
+			2'd2: column <= 011;
 			default: column <= 111;
 		endcase		
 	end
-
 endmodule
