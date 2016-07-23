@@ -83,10 +83,10 @@ module wam(
     assign gamemode = SW[9:6];
 
     // Points
-    localparam [4:0] normal_max_hits = 5'd25,    // 25 light flicks
-               [5:0] extended_max_hits = 6'd50;  // 50 light flicks
-    reg [5:0] total_points;                     // number of hits
-    reg [5:0] max_hits;                         // maximum number of possible hits
+    localparam normal_max_hits = 5'd25,    // 25 light flicks
+               extended_max_hits = 6'd50;  // 50 light flicks
+    reg [5:0] total_points;                     // number of hits (display on HEX3, HEX2)
+    reg [5:0] max_hits;                         // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -126,7 +126,7 @@ module wam(
             end
             0010: begin  // Timed
                 one_min_count TIMED(.clk(CLOCK_50), .reset(play), .start_game(start_game), .counter());
-                
+                // need to build a 2 digit decoder use for hits and time
             end
             0100: begin  // Deathmatch (1 miss = you lose)
                 
@@ -141,7 +141,7 @@ module wam(
     end
 
     always @(*)
-    begin: Maximum number of hits               // display on HEX1, HEX0 when in game mode 0001 & 0100
+    begin: Maximum number of hits               
         case(SW[5])
             0: max_hits <= normal_max_hits;
             1: max_hits <= extended_max_hits;
@@ -150,6 +150,8 @@ module wam(
     end
 
     // -------------------------------------------------------------------------
+    reg [3:0] light_pos;
+    reg [3:0] button_pressed;
     
     // Light controller
     light_controller LC(.time_on(time_on),
@@ -158,16 +160,20 @@ module wam(
                         .start(start_game)
                         .clk(CLOCK_50),
                         .reset(play),
-                        .lights(LEDR));
+                        .lights(LEDR),
+                        .light_pos(light_pos));
 
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
-                         .reset);
+                         .reset(play),
+                         .valid__key(),                     // key is only output when it is valid might not need this
+                         .column(),
+                         .key(button_pressed));
     
     always @(*)
     begin: Record hits
-        if ( == )
+        if (light_pos == button_pressed)
             total_points <= total_points + 1'b1;
     end
 endmodule
