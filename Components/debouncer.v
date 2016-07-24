@@ -5,13 +5,13 @@
 `include "D_flip_flop.v"
 
 module debouncer(
-	input [2:0] column,
+	input [2:0] row,
 	input clk, 
 	output key_down
 	);
 
 	wire key_signal;
-	assign key_signal = ~&column;
+	assign key_signal = ~&row;
 
 	wire [2:0] Q;
 
