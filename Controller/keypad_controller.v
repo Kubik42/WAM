@@ -4,97 +4,94 @@
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
 `include "../Components/debouncer.v"
-`include "../Components/clock_divider.v"
-`include "../Components/D_flip_flop.v"
-`include "../Components/T_flip_flop.v"
 `include "../Components/encoder.v"
 `include "../Components/decoder.v"
+`include "../Components/clock_divider.v"
 `include "../Components/key_register.v"
-`include "../Components/key_down_register.v"
+`include "../Components/valid_key_register.v"
 
 module keypad_controller(
     input [2:0] row,
     input clk,
     input reset,
-    output reg valid_key,
+    output valid_key,
     output [2:0] column,
-    output [3:0] key // Position of the button pressed (0-8)
+    output [3:0] key
     );
 
     // Clock dividers ----------------------------------------------------------
 
     wire clk_1MHz, clk_183Hz, clk_31Hz;  // Scan rate is approx six times slower than the debounce clock
-    wire [5:0] counter_1Mhz;
-    wire [12:0] counter_183Hz;
-    wire [14:0] counter_31Hz;
-    localparam counter_max_1MHz  = 6'd49,      // Relative to 50Mhz
-               counter_max_183Hz = 13'd5464    // Relative to 1MHz
-               counter_max_31Hz  = 15'd32257;  // Relative to 1MHz              
+    wire [27:0] counter_1MHz;
+    wire [27:0] counter_183Hz;
+    wire [27:0] counter_31Hz;
+    // THESE ARE THE REAL TIMES, UNCOMMENT THEM WHEN NOT TESTING
+    // localparam counter_max_1MHz  = 28'd49,     // Relative to 50Mhz
+    //            counter_max_183Hz = 28'd5464,   // Relative to 1MHz
+    //            counter_max_31Hz  = 28'd32257;  // Relative to 1MHz
 
-    clock_divider CD_1Hz(.counter_max(counter_max_1Hz),
+    // JUST FOR TESTING, COMMENT OUT WHEN NOT TESTING
+    localparam counter_max_1MHz  = 28'd5,
+               counter_max_183Hz = 28'd50,
+               counter_max_31Hz  = 28'd270;
+
+    clock_divider CD_1Hz(.counter_max(counter_max_1MHz),
                          .clk(clk),
-                         .enable(1'b1),
                          .reset(reset),
                          .counter(counter_1MHz));
 
-    assign clk_1MHz = (counter_1MHz == 6'd0) ? 1 : 0;
+    assign clk_1MHz = (counter_1MHz == 28'd0) ? 1 : 0;
 
     clock_divider CD_183Hz(.counter_max(counter_max_183Hz),
-                           .clk(clk_1Hz),
-                           .enable(1'b1),
+                           .clk(clk_1MHz),
                            .reset(reset),
                            .counter(counter_183Hz));
 
-    assign clk_183Hz = (counter_183Hz == 13'd0) ? 1 : 0; 
+    assign clk_183Hz = (counter_183Hz == 28'd0) ? 1 : 0; 
 
     clock_divider CD_31Hz(.counter_max(counter_max_31Hz),
-                          .clk(clk_1Hz),
-                          .enable(1'b1),
+                          .clk(clk_1MHz),
                           .reset(reset),
                           .counter(counter_31Hz));
 
-    assign clk_31Hz = (counter_31Hz == 15'd0) ? 1 : 0; 
+    assign clk_31Hz = (counter_31Hz == 28'd0) ? 1 : 0; 
 
     // -------------------------------------------------------------------------
     
-    // 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
-    wire [1:0] row_key;
-    wire [1:0] column_key;
+    wire [1:0] row_number;
+    wire [2:0] column_key;
 
+    wire [1:0] counter;
+
+    // 2-bit binary counter, resets at 11
+    counter BIN_COUNTER(.clk(clk_31Hz),
+                        .reset(reset),
+                        .counter(counter));
+
+    // 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
     encoder ENC(.row(~row),
-                .key(row_key));
+                .key(row_number));
 
     decoder DEC(.in(counter),
                 .column(column_key));
                 
     // Key debouncer
     debouncer DEB(.row(row),
-                .clk(clk_183Hz),
-                .key_down(key_down));
+                  .clk(clk_183Hz),
+                  .key_down(key_down));
 
     // Key register
-    keyreg KEYREG(.pressed({row_key, column_key}),
-                        .clk(key_down),
-                        .reset(reset),
-                        .key(key));
+    keyreg KEYREG(.pressed({counter, row_number}),
+                  .clk(key_down),
+                  .reset(reset),
+                  .key(key));
 
     // Valid key register
     valkeyreg VALKEYREG(.clk(key_down),
                         .reset(reset),
                         .valid_key(valid_key));
 
-    // Counter
-    wire [1:0] counter;  // 2-bit counter
-
-    counter C(.clk(clk_31Hz),
-              .counter(counter));
-
-    always @(*)
-        if (valid_key) begin
-            column <= ~column_key; 
-            key <= ((2'd3)*{2'b00, row_key} + {2'b00, column_key}); 
-        end
-    end
+    assign column = ~column_key;
 endmodule
 
 // 2 bit synchronous counter, resets at 11
@@ -104,15 +101,12 @@ module counter(
     output reg [1:0] counter
     );
 
-    tff F0(.data(1'b1),
-           .clk(clk),
-           .reset(~((~(counter[0] & counter[1])) || (!reset))), // t-flip-flop resets when 0
-           .Q(counter[0]));
-
-    tff F1(.data(counter[0]),
-           .clk(clk),
-           .reset(~((~(counter[0] & counter[1])) || (!reset))),
-           .Q(counter[1]));
-
-    //assign counter = Q;
+    always @(posedge clk or negedge reset) begin
+        if (~reset)
+            counter <= 2'd0;
+        else if (counter[1])
+            counter <= 2'd0;
+        else
+            counter <= counter + 2'b1;
+    end
 endmodule
