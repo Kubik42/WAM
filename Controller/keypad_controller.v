@@ -5,7 +5,7 @@
 
 `include "../Components/debouncer.v"
 `include "../Components/encoder.v"
-`include "../Components/decoder.v"
+`include "../Components/column_decoder.v"
 `include "../Components/clock_divider.v"
 `include "../Components/key_register.v"
 `include "../Components/valid_key_register.v"
@@ -61,7 +61,7 @@ module keypad_controller(
     wire [1:0] row_number;
     wire [2:0] column_key;
 
-    wire [1:0] counter;
+    wire [1:0] counter;   
 
     // 2-bit binary counter, resets at 11
     counter BIN_COUNTER(.clk(clk_31Hz),
@@ -72,8 +72,8 @@ module keypad_controller(
     encoder ENC(.row(~row),
                 .key(row_number));
 
-    decoder DEC(.in(counter),
-                .column(column_key));
+    column_decoder DEC(.in(counter),
+                       .column(column_key));
                 
     // Key debouncer
     debouncer DEB(.row(row),

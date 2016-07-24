@@ -5,7 +5,7 @@ vlib work
 
 # Compile all verilog modules in mux.v to working dir;
 # could also have multiple verilog files.
-vlog lfsr.v 
+vlog ../Components/lfsr.v 
 
 # Load simulation using top level simulation module.
 vsim lfsr
