@@ -95,7 +95,7 @@ module wam(
                extended_max_hits = 6'd50;  // 50 light flicks
     reg [5:0] total_points;                     // number of hits (display on HEX3, HEX2)
     reg [6:0] max_hits;                         // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
-    reg [6:0] light_flicks;						// number of light flicked
+    reg [6:0] light_flicks;						// number of lights flicked
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -167,18 +167,16 @@ module wam(
 
     // -------------------------------------------------------------------------
     
-    reg [3:0] light_pos;
-    reg [3:0] button_pressed;
+    wire has_input;
+    wire [3:0] light_pos, key_pressed;
     
     // Light controller
     light_controller LC(.time_on(time_on),
                         .time_between(time_between),
-                        .load_seed(load_seed),
-                        .start(start_game)
-                        .clk(CLOCK_50),
-                        .reset(reset),
-                        .lights(LEDR),
-                        .light_pos(light_pos));
+                        .clear(clear_memory),
+                         .valid_key(has_input),
+                         .column(column),
+                         .key(pressed));
 
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
@@ -189,10 +187,12 @@ module wam(
                          .key(button_pressed));
     
     always @(*)
-    begin: Record hits
-        if (light_pos == button_pressed)
-            total_points <= total_points + 1'b1;
-    end
+    begin: record_hits
+        if (has_input) begin
+            if (light_pos == key_pressed)
+                total_points <= total_points + 1'b1;
+        end
+        // Clear memory here
     
     always @(*)
     begin: Record light flick
