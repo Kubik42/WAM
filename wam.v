@@ -15,27 +15,33 @@ module wam(
     input [9:0] SW,
     input CLOCK_50,
     input [2:0] key_matrix_row,
+    output [2:0] column,
     output reg [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3
     );
 
-    assign play = ~KEY[0]; 
-    reg load_seed, reset;
+    assign play = KEY[0]; // all modules resets when 0
+    reg load_seed, clear_memory;
 
     // States ------------------------------------------------------------------
 
     wire [1:0] current_state, next_state;
 
-    localparam SETUP   = 2'd0,
-            PLAY    = 2'd1,
-            RESTART = 2'd2;
+    // States
+    localparam SETUP     = 2'd0,
+               PLAY      = 2'd1,
+               GAME_OVER = 2'd2,
+               RESTART   = 2'd3;
 
     always @(*)
     begin: state_table
         case(current_state)
             SETUP: next_state = play ? PLAY : SETUP;
-            PLAY: next_state = play ? GAMEOVER : PLAY;
-            GAMEOVER: next_state = play ? RESTART : GAMEOVER;
+            PLAY: begin
+                next_state = play ? RESTART : PLAY;  
+                next_state = ? GAME_OVER : PLAY;
+            end
+            GAME_OVER: next_state = play ? RESTART : GAME_OVER;          
             RESTART: next_state = PLAY;
         endcase
     end
@@ -44,28 +50,28 @@ module wam(
     begin: game_setup
         // By default
         load_seed = 1'b0;
-        reset = 1'b0;
+        clear_memory = 1'b0;  // Note: negedge trigger
         start_game = 1'b0;
 
         case(current_state)
             SETUP: begin
                 load_seed = 1'b1;  // Seed is loaded only once
-                reset = 1'b1;
+                clear_memory = 1'b1;
                 start_game = 1'b0;
             end
             PLAY: begin
                 load_seed = 1'b0;
-                reset = 1'b1;
+                clear_memory = 1'b1;
                 start_game = 1'b1;
             end
-            GAMEOVER: begin
+            GAME_OVER: begin
                 load_seed = 1'b0;
-                reset = 1'b1;
-                start_game = 1'b0; // Stop lights
+                clear_memory = 1'b0;
+                start_game = 1'b0;
             end
             RESTART: begin
                 load_seed = 1'b0;
-                reset = 1'b0;	// Reset game
+                clear_memory = 1'b0;
                 start_game = 1'b0;
             end
         endcase
@@ -73,7 +79,7 @@ module wam(
 
     always @(posedge CLOCK_50 or negedge play)
     begin: game
-        if (play) begin
+        if (!play) begin
             current_state <= RESTART;
         end
         else begin
@@ -91,11 +97,10 @@ module wam(
     assign gamemode = SW[9:6];
 
     // Points
-    localparam normal_max_hits = 6'd25,    // 25 light flicks
+    localparam normal_max_hits   = 6'd25,  // 25 light flicks
                extended_max_hits = 6'd50;  // 50 light flicks
-    reg [5:0] total_points;                     // number of hits (display on HEX3, HEX2)
-    reg [6:0] max_hits;                         // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
-    reg [6:0] light_flicks;						// number of light flicked
+    reg [5:0] total_points;                // number of hits (display on HEX3, HEX2)
+    reg [6:0] max_hits;                    // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -126,25 +131,24 @@ module wam(
             end
         endcase
     end
-	
-	wire [5:0] output_time; 			// Remaining time in timed mode
-	reg [1:0] lives_loss;
-	reg [1:0] max_lives_loss;
-	
+    
+    wire [5:0] time_left;
+    wire [1:0] total_lives;
+    wire [1:0] lives_left;
+    
     always @(*)
-    begin: Game mode
+    begin: game_mode
         case (gamemode)
             0001: begin  // Normal
-                two_digit_decoder mode0hits(.b(max_hits), .reset(reset), .hex0(HEX0), .hex1(HEX1));
-                two_digit_decoder mode0points(.b(total_points), .reset(reset), .hex0(HEX2), .hex1(HEX3));
+                two_digit_decoder mode0hits(.b(max_hits), .reset(play), .hex0(HEX0), .hex1(HEX1));
+                two_digit_decoder mode0points(.b(total_points), .reset(play), .hex0(HEX2), .hex1(HEX3));
             end
             0010: begin  // Timed
-                one_min_count countdown(.clk(CLOCK_50), .reset(reset), .start_game(start_game), .counter(output_time));
-                two_digit_decoder mode1time(.b(output_time), .reset(reset), .hex0(HEX0), .hex1(HEX1));
-                two_digit_decoder mode1points(.b(total_points), .reset(reset), .hex0(HEX2), .hex1(HEX3));
+                one_min_count countdown(.clk(CLOCK_50), .reset(play), .start_game(start_game), .counter(time_left));
+                two_digit_decoder mode1time(.b(time_left), .reset(play), .hex0(HEX0), .hex1(HEX1));
+                two_digit_decoder mode1points(.b(total_points), .reset(play), .hex0(HEX2), .hex1(HEX3));
             end
             0100: begin  // Deathmatch (1 miss = you lose)
-                max_lives_loss <= 2'b1;
                 
             end
             1000: begin  // Level continuity (start from 0 go to 4)
@@ -167,8 +171,8 @@ module wam(
 
     // -------------------------------------------------------------------------
     
-    reg [3:0] light_pos;
-    reg [3:0] button_pressed;
+    wire has_input;
+    wire [3:0] light_pos, key_pressed;
     
     // Light controller
     light_controller LC(.time_on(time_on),
@@ -176,34 +180,24 @@ module wam(
                         .load_seed(load_seed),
                         .start(start_game)
                         .clk(CLOCK_50),
-                        .reset(reset),
+                        .reset(play),
                         .lights(LEDR),
                         .light_pos(light_pos));
 
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
-                         .reset(reset),
-                         .valid__key(),                      
-                         .column(),
-                         .key(button_pressed));
+                         .clear(clear_memory),
+                         .valid_key(has_input),
+                         .column(column),
+                         .key(pressed));
     
     always @(*)
-    begin: Record hits
-        if (light_pos == button_pressed)
-            total_points <= total_points + 1'b1;
+    begin: record_hits
+        if (has_input) begin
+            if (light_pos == key_pressed)
+                total_points <= total_points + 1'b1;
+        end
+        // Clear memory here
     end
-    
-    always @(*)
-    begin: Record light flick
-    	if () // Needs output from light_controller
-    		light_flicks <= light_flicks + 1;
-    end
-    
-    always @(*)
-    begin: Gameover 
-    	if (max_hits == light_flicks) 
-    		// Transition to GAMEOVER state
-    end
-    
 endmodule
