@@ -14,13 +14,16 @@ module light_controller(
     input clk,
     input reset,
     output reg [8:0] lights,    // Light signals to the board
-    output [3:0] light_pos      // Light position on board
+    output [3:0] light_pos,      // Light position on board
+    output btwn_light  			// For counting the number of flicks & resetting the keypad
     );
 
     wire [27:0] counter_btwn;  // Time left until the next light flick
     wire [27:0] counter_on;    // Time left until a light will turn off
     
     reg change_light, light_off, enable_btwn, enable_on; // Light status (ON/OFF)
+    
+    assign btwn_light = light_off;
 
     reg [1:0] current_state, next_state;
 
