@@ -18,10 +18,10 @@ add wave {/*}
 force {clk} 0 0, 1 1 -r 2
 
 # Resetting
-force {reset} 0
+force {clear} 0
 run 2 ns 
 
-force {reset} 1
+force {clear} 1
 
 # No rows
 force {row} 3'b111
