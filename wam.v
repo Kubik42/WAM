@@ -15,6 +15,7 @@ module wam(
     input [9:0] SW,
     input CLOCK_50,
     input [2:0] key_matrix_row,
+    output [2:0] column,
     output reg [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3
     );
@@ -185,14 +186,14 @@ module wam(
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
-                         .clear(play),
+                         .clear(clear_memory),
                          .valid_key(pressed),
-                         .column(),
+                         .column(column),
                          .key(button_pressed));
     
     always @(*)
     begin: Record hits
-        if (light_pos == button_pressed)
+        if (light_pos == pressed)
             total_points <= total_points + 1'b1;
     end
 endmodule
