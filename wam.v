@@ -2,6 +2,8 @@
 
 `include "Controller/light_controller.v"
 `include "Controller/keypad_controller.v"
+`include "Components/one_min_decoder.v"
+`include "Components/two_digit_decoder.v"
 
 // KEY[0] - reset
 // SW[3:0] - difficulty
@@ -83,10 +85,10 @@ module wam(
     assign gamemode = SW[9:6];
 
     // Points
-    localparam normal_max_hits = 5'd25,    // 25 light flicks
+    localparam normal_max_hits = 6'd25,    // 25 light flicks
                extended_max_hits = 6'd50;  // 50 light flicks
     reg [5:0] total_points;                     // number of hits (display on HEX3, HEX2)
-    reg [5:0] max_hits;                         // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
+    reg [6:0] max_hits;                         // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -117,16 +119,22 @@ module wam(
             end
         endcase
     end
-
+	
+	wire [5:0] output_time; 			// Remaining time in timed mode
+	reg [1:0] lives_loss;
+	reg [1:0] max_lives_loss;
+	
     always @(*)
     begin: Game mode
         case (gamemode)
             0001: begin  // Normal
-                
+                two_digit_decoder mode0hits(.b(max_hits), .reset(play), .hex0(HEX0), .hex1(HEX1));
+                two_digit_decoder mode0points(.b(total_points), .reset(play), .hex0(HEX2), .hex1(HEX3));
             end
             0010: begin  // Timed
-                one_min_count TIMED(.clk(CLOCK_50), .reset(play), .start_game(start_game), .counter());
-                // need to build a 2 digit decoder use for hits and time
+                one_min_count countdown(.clk(CLOCK_50), .reset(play), .start_game(start_game), .counter(output_time));
+                two_digit_decoder mode1time(.b(output_time), .reset(play), .hex0(HEX0), .hex1(HEX1));
+                two_digit_decoder mode1points(.b(total_points), .reset(play), .hex0(HEX2), .hex1(HEX3));
             end
             0100: begin  // Deathmatch (1 miss = you lose)
                 
@@ -150,6 +158,7 @@ module wam(
     end
 
     // -------------------------------------------------------------------------
+    
     reg [3:0] light_pos;
     reg [3:0] button_pressed;
     
