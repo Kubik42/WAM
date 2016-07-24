@@ -171,7 +171,8 @@ module wam(
 
     // -------------------------------------------------------------------------
     
-    wire [3:0] light_pos, pressed;
+    wire has_input;
+    wire [3:0] light_pos, key_pressed;
     
     // Light controller
     light_controller LC(.time_on(time_on),
@@ -187,13 +188,16 @@ module wam(
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
                          .clear(clear_memory),
-                         .valid_key(pressed),
+                         .valid_key(has_input),
                          .column(column),
-                         .key(button_pressed));
+                         .key(pressed));
     
     always @(*)
-    begin: Record hits
-        if (light_pos == pressed)
-            total_points <= total_points + 1'b1;
+    begin: record_hits
+        if (has_input) begin
+            if (light_pos == key_pressed)
+                total_points <= total_points + 1'b1;
+        end
+        // Clear memory here
     end
 endmodule
