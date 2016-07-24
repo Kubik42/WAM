@@ -13,7 +13,7 @@
 module keypad_controller(
     input [2:0] row,
     input clk,
-    input reset,
+    input clear,
     output valid_key,
     output [2:0] column,
     output [3:0] key
@@ -37,21 +37,21 @@ module keypad_controller(
 
     clock_divider CD_1Hz(.counter_max(counter_max_1MHz),
                          .clk(clk),
-                         .reset(reset),
+                         .reset(clear),
                          .counter(counter_1MHz));
 
     assign clk_1MHz = (counter_1MHz == 28'd0) ? 1 : 0;
 
     clock_divider CD_183Hz(.counter_max(counter_max_183Hz),
                            .clk(clk_1MHz),
-                           .reset(reset),
+                           .reset(clear),
                            .counter(counter_183Hz));
 
     assign clk_183Hz = (counter_183Hz == 28'd0) ? 1 : 0; 
 
     clock_divider CD_31Hz(.counter_max(counter_max_31Hz),
                           .clk(clk_1MHz),
-                          .reset(reset),
+                          .reset(clear),
                           .counter(counter_31Hz));
 
     assign clk_31Hz = (counter_31Hz == 28'd0) ? 1 : 0; 
@@ -65,7 +65,7 @@ module keypad_controller(
 
     // 2-bit binary counter, resets at 11
     counter BIN_COUNTER(.clk(clk_31Hz),
-                        .reset(reset),
+                        .reset(clear),
                         .counter(counter));
 
     // 3-bit to 2-bit Encoder and 2-bit to 3-bit decoder
@@ -83,12 +83,12 @@ module keypad_controller(
     // Key register
     keyreg KEYREG(.pressed({counter, row_number}),
                   .clk(key_down),
-                  .reset(reset),
+                  .reset(clear),
                   .key(key));
 
     // Valid key register
     valkeyreg VALKEYREG(.clk(key_down),
-                        .reset(reset),
+                        .reset(clear),
                         .valid_key(valid_key));
 
     assign column = ~column_key;
