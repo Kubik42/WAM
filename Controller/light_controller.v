@@ -88,7 +88,7 @@ module light_controller(
     wire [16:0] light;     // Light on board
 
     // 16-bit random number generator
-    rng RNG(.seed(16'd1),  // NEED A BETTER SEED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    rng RNG(.seed(16'd89),  // NEED A BETTER SEED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             .load(load_seed),
             .clk(clk), 
             .reset(reset), 
