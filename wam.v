@@ -5,6 +5,7 @@
 `include "Components/one_min_decoder.v"
 `include "Components/two_digit_decoder.v"
 `include "Components/bin_dec_decoder.v"
+`include "Components/light_decoder.v"
 
 // KEY[0] - reset
 // SW[3:0] - difficulty
@@ -22,7 +23,7 @@ module wam(
     );
 
     assign play = ~KEY[0]; // all modules resets when 0
-    reg load_seed, clear_memory;
+    reg load_seed, clear_memory, gameover;
 
     // States ------------------------------------------------------------------
 
@@ -40,7 +41,7 @@ module wam(
             SETUP: next_state = play ? PLAY : SETUP;
             PLAY: begin
                 next_state = play ? RESTART : PLAY;  
-                next_state = ? GAME_OVER : PLAY;
+                next_state = gameover ? GAME_OVER : PLAY;
             end
             GAME_OVER: next_state = play ? RESTART : GAME_OVER;          
             RESTART: next_state = PLAY;
@@ -59,23 +60,30 @@ module wam(
                 load_seed = 1'b1;  // Seed is loaded only once
                 clear_memory = 1'b1;
                 start_game = 1'b0;
+                gameover = 1'b0;
             end
             PLAY: begin
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
                 start_game = 1'b1;
+                gameover = 1'b0;
             end
             GAME_OVER: begin
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
                 start_game = 1'b0;
+                gameover = 1'b1;
             end
             RESTART: begin
                 load_seed = 1'b0;
                 clear_memory = 1'b0;
                 start_game = 1'b0;
+                gameover = 1'b0;
             end
         endcase
+        // Game over
+    	if ((max_hits == light_flicks) || ((total_lives != 0) && (lives_left == 0)) // no more hits or no more lives
+    		gameover <= 1'b1; 
     end
 
     always @(posedge CLOCK_50 or negedge play)
@@ -218,12 +226,6 @@ module wam(
     always @(posedge light_off)
     begin: Record light flick
     		light_flicks <= light_flicks + 1;
-    end
-    
-    always @(*)
-    begin: Gameover 
-    	if ((max_hits == light_flicks) || ((total_lives != 0) && (lives_left == 0))
-    		// Transition to GAMEOVER state
     end
 
 endmodule
