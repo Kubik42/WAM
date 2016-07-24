@@ -10,10 +10,10 @@ module decoder(
 	always @(*)
 	begin: decode
 		case (in)
-			2'd0: column <= 110;
-			2'd1: column <= 101;
-			2'd2: column <= 011;
-			default: column <= 111;
+			2'd0: column <= 3'b001;  // Col 1
+			2'd1: column <= 3'b010;  // Col 2
+			2'd2: column <= 3'b100;  // Col 3
+			default: column <= 3'b000;
 		endcase		
 	end
 endmodule
