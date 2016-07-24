@@ -25,8 +25,8 @@ module light_controller(
     reg [1:0] current_state, next_state;
 
     localparam WAIT_BTWN = 2'd0,  // Wait until turning on light
-              FLICK     = 2'd1,   // Turn on light
-              WAIT_ON   = 2'd2;   // Keep light on
+               FLICK     = 2'd1,   // Turn on light
+               WAIT_ON   = 2'd2;   // Keep light on
 
     always @(*)
     begin: state_table
