@@ -10,9 +10,9 @@ module encoder(
 	always @(*)
 	begin: encode
 		case(row)
-			110: key <= 2'd0;
-			101: key <= 2'd1;
-			011: key <= 2'd2;
+			3'b001: key <= 2'd0;  // Row 1
+			3'b010: key <= 2'd1;  // Row 2
+			3'b100: key <= 2'd2;  // Row 3
 			default: key <= 2'd3;
 		endcase
 	end
