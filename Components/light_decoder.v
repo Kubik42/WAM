@@ -8,10 +8,10 @@ module light_decoder(
 	);
 	
 	wire [3:0] row2;
-	assign row2 = (in[3:0] - 4'd0011);
+	assign row2 = (in[3:0] - 4'b0011);
 	
 	wire [3:0] row3;
-	assign row3 = (in[3:0] - 4'd0110);
+	assign row3 = (in[3:0] - 4'b0110);
 	
 	always @(*)
 	begin

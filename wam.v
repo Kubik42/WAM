@@ -12,6 +12,15 @@
 // SW[9:6] - game mode
 // SW[5]   - total game points
 
+// Expansion header for signals input and output
+// p.33 ftp://ftp.altera.com/up/pub/Altera_Material/Boards/DE1/DE1_User_Manual.pdf
+// GPIO_0[11] - 5V DC
+// GPIO_0[29] - 3.3V DC
+// GPIO_0[12] - GND
+// GPIO_0[2:0] - input 
+// GPIO_0[5:3] - output
+
+
 module wam(
     input [0:0] KEY,
     input [9:0] SW,
@@ -22,7 +31,7 @@ module wam(
     output [6:0] HEX0, HEX1, HEX2, HEX3
     );
 
-    assign play = ~KEY[0]; // all modules resets when 0
+    assign play = ~KEY[0];
     reg load_seed, clear_memory, gameover;
 
     // States ------------------------------------------------------------------
@@ -88,7 +97,7 @@ module wam(
 
     always @(posedge CLOCK_50 or negedge play)
     begin: game
-        if (!play) begin
+        if (play) begin
             current_state <= RESTART;
         end
         else begin
@@ -100,7 +109,7 @@ module wam(
 
     // Switches
     wire [3:0] difficulty;
-    assign difficulty = SW[3:0]
+    assign difficulty = SW[3:0];
 
     wire [3:0] gamemode;
     assign gamemode = SW[9:6];
@@ -143,13 +152,13 @@ module wam(
     end
     
     wire [5:0] time_left;
-    wire [1:0] total_lives;
-    wire [1:0] lives_left;
+    reg [1:0] total_lives;
+    reg [1:0] lives_left;
     
     always @(*)
     begin: game_mode
     	// By default
-    	total_lives <= 0; // GAMEOVER condition below
+    	total_lives <= 0; 
     	lives_left <= 0; 
         case (gamemode)
             0001: begin  // Normal
