@@ -7,23 +7,21 @@
 `include "../Components/clock_divider.v"
 
 module light_controller(
-    input [27:0] time_on,       // Time a light will stay on for
-    input [27:0] time_between,  // Time between flicks
-    input load_seed,            // Seed for rng
-    input start,                // Signal to start flicking lights
+    input [27:0] time_on,           // Time a light will stay on for
+    input [27:0] time_between,      // Time between flicks
+    input load_seed,                // Seed for rng
+    input start,                    // Signal to start flicking lights
     input clk,
     input reset,
-    output reg [8:0] lights,    // Light signals to the board
-    output [3:0] light_pos,      // Light position on board
-    output btwn_light  			// For counting the number of flicks & resetting the keypad
+    output reg [8:0] lights,        // Light signals to the board
+    output [3:0] light_pos,         // Light position on board
+    output reg [5:0] light_counter  // Number of light flicks
     );
 
     wire [27:0] counter_btwn;  // Time left until the next light flick
     wire [27:0] counter_on;    // Time left until a light will turn off
     
     reg change_light, light_off, enable_btwn, enable_on; // Light status (ON/OFF)
-    
-    assign btwn_light = light_off;
 
     reg [1:0] current_state, next_state;
 
@@ -110,6 +108,7 @@ module light_controller(
         if (~reset)  begin  // Turn off all lights          
             lights <= 0;
             current_state <= WAIT_BTWN;
+            light_counter <= 6'b000000;
         end
         else begin
             if (change_light) begin  // Turn on a light
@@ -124,6 +123,7 @@ module light_controller(
                     4'd7: lights[7] <= 1'b1;
                     4'd8: lights[8] <= 1'b1;
                 endcase
+                light_counter <= light_counter + 1'b1;
             end
 
             if (light_off) begin  // Turn off a light
