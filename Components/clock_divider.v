@@ -3,6 +3,7 @@
 module clock_divider(
     input [27:0] counter_max, 
     input clk,
+    input enable,
     input reset, 
     output reg [27:0] counter);
 
@@ -11,7 +12,7 @@ module clock_divider(
     begin
         if (~reset)
             counter <= counter_max;
-        else begin
+        else if (enable) begin
             if (counter == 28'd0)  // Counter reached 0
                 counter <= counter_max;
             else
