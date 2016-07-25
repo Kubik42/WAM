@@ -2,7 +2,8 @@
 
 `include "Controller/light_controller.v"
 `include "Controller/keypad_controller.v"
-`include "Components/one_min_decoder.v"
+`include "Components/clock_divider.v"
+`include "Components/one_min_count.v"
 `include "Components/two_digit_decoder.v"
 `include "Components/bin_dec_decoder.v"
 `include "Components/light_decoder.v"
@@ -11,6 +12,14 @@
 // SW[3:0] - difficulty
 // SW[9:6] - game mode
 // SW[5]   - total game points
+
+// Displays:
+//   HEX0: max hits
+//   HEX1: max hits
+//   HEX2: score (player hits)
+//   HEX3: score (player hits)
+//   HEX4: timer
+//   HEX5: ready timer / timer
 
 // Expansion header for signals input and output
 // p.33 ftp://ftp.altera.com/up/pub/Altera_Material/Boards/DE1/DE1_User_Manual.pdf
@@ -27,99 +36,114 @@ module wam(
     input CLOCK_50,
     input [2:0] key_matrix_row,
     output [2:0] column,
-    output reg [8:0] LEDR,
-    output [6:0] HEX0, HEX1, HEX2, HEX3
+    output [8:0] LEDR,
+    output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
 
     assign play = ~KEY[0];
-    reg load_seed, clear_memory, gameover;
+
+    wire [8:0] lights;
+    assign LEDR = lights;
+
+    wire [2:0] ready_counter;
+    reg countdown, load_seed, start_game, clear_memory;
+
+    // Points
+    localparam normal_max_hits   = 6'd25,  // 25 light flicks
+               extended_max_hits = 6'd50;  // 50 light flicks
+
+    reg [5:0] total_points;   // points gotten by the player (displays on HEX3, HEX2)
+    reg [5:0] max_hits;       // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
+    wire [5:0] light_counter;  // number of lights flicked
+
+    // For other game modes
+    // wire [5:0] time_left;
+    // reg [1:0] total_lives;
+    // reg [1:0] lives_left;
 
     // States ------------------------------------------------------------------
 
-    wire [1:0] current_state, next_state;
+    reg [2:0] current_state, next_state;
 
     // States
-    localparam SETUP     = 2'd0,
-               PLAY      = 2'd1,
-               GAME_OVER = 2'd2,
-               RESTART   = 2'd3;
+    localparam SETUP     = 3'd0,
+               WAIT      = 3'd1,
+               PLAY      = 3'd2,
+               GAME_OVER = 3'd3,
+               RESTART   = 3'd4;
 
     always @(*)
     begin: state_table
         case(current_state)
-            SETUP: next_state = play ? PLAY : SETUP;
+            SETUP: next_state = play ? RESTART : SETUP;
+            WAIT: next_state = (ready_counter == 3'd0) ? PLAY : WAIT;
             PLAY: begin
-                next_state = play ? RESTART : PLAY;  
-                next_state = gameover ? GAME_OVER : PLAY;
+                next_state = play ? RESTART : PLAY;
+                // The game is over when the required number of lights have been flicked
+                next_state = (light_counter == max_hits) ? GAME_OVER : PLAY;
             end
-            GAME_OVER: next_state = play ? RESTART : GAME_OVER;          
-            RESTART: next_state = PLAY;
+            GAME_OVER: next_state = play ? RESTART : GAME_OVER;        
+            RESTART: next_state = WAIT;
         endcase
     end
 
     always @(*)
     begin: game_setup
         // By default
+        countdown = 1'b0;
         load_seed = 1'b0;
         clear_memory = 1'b0;  // Note: negedge trigger
         start_game = 1'b0;
 
         case(current_state)
             SETUP: begin
+                countdown = 1'b0;           
                 load_seed = 1'b1;  // Seed is loaded only once
                 clear_memory = 1'b1;
                 start_game = 1'b0;
-                gameover = 1'b0;
+            end
+            WAIT: begin
+                countdown = 1'b1;
+                load_seed = 1'b0;
+                clear_memory = 1'b1;
+                start_game = 1'b0;
             end
             PLAY: begin
+                countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
                 start_game = 1'b1;
-                gameover = 1'b0;
             end
             GAME_OVER: begin
+                countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
                 start_game = 1'b0;
-                gameover = 1'b1;
             end
             RESTART: begin
+                countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b0;
                 start_game = 1'b0;
-                gameover = 1'b0;
             end
         endcase
-        // Game over
-    	if ((max_hits == light_flicks) || ((total_lives != 0) && (lives_left == 0)) // no more hits or no more lives
-    		gameover <= 1'b1; 
     end
 
-    always @(posedge CLOCK_50 or negedge play)
+    always @(posedge CLOCK_50)
     begin: game
-        if (play) begin
-            current_state <= RESTART;
-        end
-        else begin
-            current_state <= next_state;
-        end
+        current_state <= next_state;
     end
 
     // Basic game settings -----------------------------------------------------
 
-    // Switches
     wire [3:0] difficulty;
     assign difficulty = SW[3:0];
 
-    wire [3:0] gamemode;
-    assign gamemode = SW[9:6];
+    wire [3:0] game_mode;
+    assign game_mode = SW[9:6];
 
-    // Points
-    localparam normal_max_hits   = 6'd25,  // 25 light flicks
-               extended_max_hits = 6'd50;  // 50 light flicks
-    reg [5:0] total_points;                // number of hits (display on HEX3, HEX2)
-    reg [5:0] max_hits;                    // maximum number of possible hits (display on HEX1, HEX0 when in game mode 0001 & 0100)
-    reg [5:0] light_flicks;				// number of lights flicked
+    // Enable signals
+    reg use_points, use_timer, use_lives;
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -150,44 +174,45 @@ module wam(
             end
         endcase
     end
-    
-    wire [5:0] time_left;
-    reg [1:0] total_lives;
-    reg [1:0] lives_left;
-    
+
     always @(*)
-    begin: game_mode
-    	// By default
-    	total_lives <= 0; 
-    	lives_left <= 0; 
-        case (gamemode)
-            0001: begin  // Normal
-                two_digit_decoder mode0hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-                two_digit_decoder mode0points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+    begin: mode
+        // By default
+        use_points = 1'b0;
+        use_timer = 1'b0;
+        use_lives  = 1'b0;
+
+        case (game_mode)
+            4'b1000: begin  // Normal mode
+                use_points = 1'b1;
+                use_timer = 1'b0;
+                use_lives = 1'b0;
             end
-            0010: begin  // Timed
-                one_min_count countdown(.clk(CLOCK_50), .reset(clear_memory), .start_game(start_game), .counter(time_left));
-                two_digit_decoder mode1time(.b(time_left), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-                two_digit_decoder mode1points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+            4'b0100: begin  // Timed mode
+                use_points = 1'b0;
+                use_timer = 1'b1;
+                use_lives = 1'b0;
             end
-            0100: begin  // Deathmatch (1 miss = you lose)
-                total_lives <= 2'b1;
-                lives_left <= 2'b1;
-                bdd mode2lives(.binary({2'd0, lives_left}), .reset(clear_memory), .hex(HEX0));
-                two_digit_decoder mode2points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+            4'b0010: begin  // Lives mode
+                use_points = 1'b0;
+                use_timer = 1'b0;
+                use_lives = 1'b1;
             end
-            1000: begin  // Level continuity (start from 0 go to 4)
-                two_digit_decoder mode3hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-                two_digit_decoder mode3points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+            4'b0001: begin  // Continuity --- MAY BE TOO HARD TO IMPLEMENT???, same as normal rn
+                use_points = 1'b1;
+                use_timer = 1'b0;
+                use_lives = 1'b0;
             end
-            default: begin  // Same as normal
-                
+            default: begin  // Sme as normal
+                use_points = 1'b1;
+                use_timer = 1'b0;
+                use_lives = 1'b0;
             end
         endcase
     end
 
     always @(*)
-    begin: Maximum number of hits               
+    begin: hits
         case(SW[5])
             0: max_hits <= normal_max_hits;
             1: max_hits <= extended_max_hits;
@@ -195,21 +220,91 @@ module wam(
         endcase
     end
 
+    // Dispalying score
+    two_digit_decoder TOTAL(.b(max_hits),
+                            .enable(use_points),
+                            .reset(clear_memory),
+                            .hex0(HEX0),
+                            .hex1(HEX1));
+
+    two_digit_decoder PLAYER_SCORE(.b(total_points),
+                                   .enable(~countdown),
+                                   .reset(clear_memory),
+                                   .hex0(HEX2),
+                                   .hex1(HEX3));
+
+    // Ready countdown ---------------------------------------------------------
+
+    wire [27:0] countdown_counter;
+    wire start_countdown;
+
+    // Countdown every 1 second
+    clock_divider CD_1Hz(.counter_max(28'd49_999_999),
+                         .clk(CLOCK_50),
+                         .enable(countdown),
+                         .reset(clear_memory),
+                         .counter(countdown_counter));
+
+    assign start_countdown = (countdown_counter == 28'd0) ? 1 : 0;
+
+    countdown_timer COUNTDOWN(.clk(CLOCK_50),
+                              .enable(start_countdown),
+                              .reset(clear_memory),
+                              .counter(ready_counter));
+
+    bdd COUNTDOWN_DIS(.binary({1'b0, ready_counter}),
+                      .enable(start_countdown),
+                      .reset(clear_memory),
+                      .hex(HEX5));
+
+    // -------------------------------------------------------------------------
+
+    // always @(*)
+    // begin: game_mode
+    //     // By default
+    //     total_lives <= 0; 
+    //     lives_left <= 0;
+
+    //     case (gamemode)
+    //         0001: begin  // Normal
+    //             two_digit_decoder mode0hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
+    //             two_digit_decoder mode0points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+    //         end
+    //         0010: begin  // Timed
+    //             one_min_count countdown(.clk(CLOCK_50), .reset(clear_memory), .start_game(start_game), .counter(time_left));
+    //             two_digit_decoder mode1time(.b(time_left), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
+    //             two_digit_decoder mode1points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+    //         end
+    //         0100: begin  // Deathmatch (1 miss = you lose)
+    //             total_lives <= 2'b1;
+    //             lives_left <= 2'b1;
+    //             bdd mode2lives(.binary({2'd0, lives_left}), .reset(clear_memory), .hex(HEX0));
+    //             two_digit_decoder mode2points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+    //         end
+    //         1000: begin  // Level continuity (start from 0 go to 4)
+    //             two_digit_decoder mode3hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
+    //             two_digit_decoder mode3points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
+    //         end
+    //         default: begin  // Same as normal
+    //         end
+    //     endcase
+    // end
+
     // -------------------------------------------------------------------------
     
-    wire has_input, light_off;
-    wire [3:0] light_pos, light_coord, key_pressed;
+    wire has_input;
+    wire [3:0] light_pos, key_pressed;
     
     // Light controller
     light_controller LC(.time_on(time_on),
                         .time_between(time_between),
                         .load_seed(load_seed),
-                        .start(start_game)
+                        .start(start_game),
                         .clk(CLOCK_50),
                         .reset(clear_memory),
-                        .lights(LEDR),
+                        .lights(lights),
                         .light_pos(light_pos),
-                        .btwn_light(light_off)); // For recording number of light flicks
+                        .light_counter(light_counter));
 
     // Keypad controller
     keypad_controller KC(.row(key_matrix_row),
@@ -218,23 +313,31 @@ module wam(
                          .valid_key(has_input),
                          .column(column),
                          .key(key_pressed));
-    
-    // Light decoder
-    liglht_decoder LD(.in(light_pos), 
-    					.coordinates(light_coord));
-    
+   
     always @(*)
-    begin: Record_hits
+    begin: record_hits
         if (has_input) begin
-            if (light_coord == key_pressed)
+            if (light_pos == key_pressed)
                 total_points <= total_points + 1'b1;
         end
-        // Clear memory here
     end
-    
-    always @(posedge light_off)
-    begin: Record light flick
-    		light_flicks <= light_flicks + 1;
-    end
+endmodule
 
+// Ready countdown timer
+module countdown_timer(
+    input clk,
+    input enable,
+    input reset,
+    output reg [2:0] counter
+    );
+
+    always @(posedge clk or negedge reset) begin
+        if (~reset)
+            counter <= 3'd5;
+        else if (counter == 3'd0)
+            counter <= 3'd5;
+        else if (enable) begin
+            counter <= counter - 3'b1;
+        end
+    end
 endmodule
