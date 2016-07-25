@@ -45,9 +45,6 @@ module wam(
     wire [8:0] lights;
     assign LEDR = lights;
 
-    wire [2:0] ready_counter;
-    reg countdown, load_seed, start_game, clear_memory;
-
     // Points
     localparam normal_max_hits   = 6'd25,  // 25 light flicks
                extended_max_hits = 6'd50;  // 50 light flicks
@@ -65,6 +62,12 @@ module wam(
 
     reg [2:0] current_state, next_state;
 
+    wire [2:0] ready_counter;
+
+    // Enable signals
+    reg countdown, load_seed, flick_lights, clear_memory;
+    reg use_points, use_timer, use_lives;
+
     // States
     localparam SETUP     = 3'd0,
                WAIT      = 3'd1,
@@ -72,9 +75,23 @@ module wam(
                GAME_OVER = 3'd3,
                RESTART   = 3'd4;
 
+    // Default initializations
+    initial begin
+        countdown = 1'b0;
+        load_seed = 1'b0;
+        clear_memory = 1'b0;  // Note: negedge trigger
+        flick_lights = 1'b0;
+
+        use_points = 1'b0;
+        use_timer = 1'b0;
+        use_lives = 1'b0;
+
+        current_state <= SETUP;
+    end
+
     always @(*)
     begin: state_table
-        case(current_state)
+        case (current_state)
             SETUP: next_state = play ? RESTART : SETUP;
             WAIT: next_state = (ready_counter == 3'd0) ? PLAY : WAIT;
             PLAY: begin
@@ -89,49 +106,43 @@ module wam(
 
     always @(*)
     begin: game_setup
-        // By default
-        countdown = 1'b0;
-        load_seed = 1'b0;
-        clear_memory = 1'b0;  // Note: negedge trigger
-        start_game = 1'b0;
-
-        case(current_state)
+        case (current_state)
             SETUP: begin
                 countdown = 1'b0;           
                 load_seed = 1'b1;  // Seed is loaded only once
                 clear_memory = 1'b1;
-                start_game = 1'b0;
+                flick_lights = 1'b0;
             end
             WAIT: begin
                 countdown = 1'b1;
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
-                start_game = 1'b0;
+                flick_lights = 1'b0;
             end
             PLAY: begin
                 countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
-                start_game = 1'b1;
+                flick_lights = 1'b1;
             end
             GAME_OVER: begin
                 countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b1;
-                start_game = 1'b0;
+                flick_lights = 1'b0;
             end
             RESTART: begin
                 countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b0;
-                start_game = 1'b0;
+                flick_lights = 1'b0;
             end
         endcase
     end
 
     always @(posedge CLOCK_50)
     begin: game
-        current_state <= next_state;
+        current_state <= next_state;     
     end
 
     // Basic game settings -----------------------------------------------------
@@ -142,9 +153,6 @@ module wam(
     wire [3:0] game_mode;
     assign game_mode = SW[9:6];
 
-    // Enable signals
-    reg use_points, use_timer, use_lives;
-
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
     reg [27:0] time_on;  // Time the light will stay on for
@@ -153,8 +161,8 @@ module wam(
     begin : Difficulty
         case (difficulty)
             0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
-                time_between <= 28'd99_999_999;
-                time_on <= 28'd99_999_999;
+                time_between <= 28'd99;
+                time_on <= 28'd99;
             end
             0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
@@ -177,11 +185,6 @@ module wam(
 
     always @(*)
     begin: mode
-        // By default
-        use_points = 1'b0;
-        use_timer = 1'b0;
-        use_lives  = 1'b0;
-
         case (game_mode)
             4'b1000: begin  // Normal mode
                 use_points = 1'b1;
@@ -239,7 +242,7 @@ module wam(
     wire start_countdown;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd49_999_999),
+    clock_divider CD_1Hz(.counter_max(28'd4),  // should be 49_999_999
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
@@ -299,7 +302,7 @@ module wam(
     light_controller LC(.time_on(time_on),
                         .time_between(time_between),
                         .load_seed(load_seed),
-                        .start(start_game),
+                        .start(flick_lights),
                         .clk(CLOCK_50),
                         .reset(clear_memory),
                         .lights(lights),
