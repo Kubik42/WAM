@@ -13,10 +13,10 @@ module bdd(
     output reg [6:0] hex
     );
 
-    always @(binary)
-    	if (!reset)
+    always @(*)
+    	if (~reset)
     		hex <= 7'b1111111;
-    	else begin
+    	else if (enable) begin
     		case (binary)
 				4'h0: hex <= 7'b0111111;
 				4'h1: hex <= 7'b0000110;
