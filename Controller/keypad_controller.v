@@ -37,6 +37,7 @@ module keypad_controller(
 
     clock_divider CD_1Hz(.counter_max(counter_max_1MHz),
                          .clk(clk),
+                         .enable(1'b1),
                          .reset(clear),
                          .counter(counter_1MHz));
 
@@ -44,6 +45,7 @@ module keypad_controller(
 
     clock_divider CD_183Hz(.counter_max(counter_max_183Hz),
                            .clk(clk_1MHz),
+                           .enable(1'b1),
                            .reset(clear),
                            .counter(counter_183Hz));
 
@@ -51,6 +53,7 @@ module keypad_controller(
 
     clock_divider CD_31Hz(.counter_max(counter_max_31Hz),
                           .clk(clk_1MHz),
+                          .enable(1'b1),
                           .reset(clear),
                           .counter(counter_31Hz));
 
