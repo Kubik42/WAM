@@ -35,11 +35,11 @@ module keypad_controller(
                counter_max_183Hz = 28'd50,
                counter_max_31Hz  = 28'd270;
 
-    clock_divider CD_1Hz(.counter_max(counter_max_1MHz),
-                         .clk(clk),
-                         .enable(1'b1),
-                         .reset(clear),
-                         .counter(counter_1MHz));
+    clock_divider CD_1MHz(.counter_max(counter_max_1MHz),
+                          .clk(clk),
+                          .enable(1'b1),
+                          .reset(clear),
+                          .counter(counter_1MHz));
 
     assign clk_1MHz = (counter_1MHz == 28'd0) ? 1 : 0;
 
