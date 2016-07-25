@@ -8,6 +8,7 @@
 
 module bdd(
     input [3:0] binary,
+    input enable,
     input reset,
     output reg [6:0] hex
     );
