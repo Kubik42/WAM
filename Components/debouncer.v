@@ -16,17 +16,17 @@ module debouncer(
 	wire [2:0] Q;
 
 	// 3-bit register. Once all outputs are high, then the key has been pressed
-	dff F0(.data(key_signal),
+	d_flip_flop F0(.data(key_signal),
 				 .clk(clk),
 				 .reset(1'b1),
 				 .Q(Q[0]));
 
-	dff F1(.data(Q[0]),
+	d_flip_flop F1(.data(Q[0]),
 				 .clk(clk),
 				 .reset(1'b1),
 				 .Q(Q[1]));
 
-	dff F2(.data(Q[1]),
+	d_flip_flop F2(.data(Q[1]),
 				 .clk(clk),
 				 .reset(1'b1),
 				 .Q(Q[2]));

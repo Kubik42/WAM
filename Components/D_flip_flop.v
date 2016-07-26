@@ -2,7 +2,7 @@
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
-module dff(
+module d_flip_flop(
 	input data,
 	input clk,
 	input reset,

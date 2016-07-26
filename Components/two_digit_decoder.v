@@ -2,7 +2,7 @@
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
 
-`include "bin_dec_decoder.v"
+//`include "bin_dec_decoder.v"
 
 module two_digit_decoder(
     input [5:0] b,

@@ -4,7 +4,7 @@
 
 `include "../Components/random_number_generator.v"
 `include "../Components/simple_number_tuner.v"
-`include "../Components/clock_divider.v"
+//`include "../Components/clock_divider.v"
 
 module light_controller(
     input [27:0] time_on,           // Time a light will stay on for

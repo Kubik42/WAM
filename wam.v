@@ -3,7 +3,7 @@
 `include "Controller/light_controller.v"
 `include "Controller/keypad_controller.v"
 `include "Components/clock_divider.v"
-`include "Components/one_min_count.v"
+//`include "Components/one_min_count.v"
 `include "Components/two_digit_decoder.v"
 `include "Components/bin_dec_decoder.v"
 `include "Components/light_decoder.v"
@@ -24,26 +24,32 @@
 // Expansion header for signals input and output
 // p.33 ftp://ftp.altera.com/up/pub/Altera_Material/Boards/DE1/DE1_User_Manual.pdf
 // GPIO_0[11] - 5V DC
-// GPIO_0[29] - 3.3V DC
 // GPIO_0[12] - GND
-// GPIO_0[2:0] - input 
-// GPIO_0[5:3] - output
+// GPIO_0[9:1] - lights 
+// GPIO_0[18:13] - buttons
 
 
 module wam(
     input [0:0] KEY,
     input [9:0] SW,
     input CLOCK_50,
-    input [2:0] key_matrix_row,
+    //input [2:0] key_matrix_row,
+	input [16:1] GPIO_1,
     output [2:0] column,
-    output [8:0] LEDR,
+	output [16:1] GPIO_0,
+    output reg [9:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
-
+	
+	wire [2:0] key_matrix_row;
+	assign key_matrix_row = GPIO_1[3:1];
+	
+	assign GPIO_0[3:1] = column; 	
+	
     assign play = ~KEY[0];
 
     wire [8:0] lights;
-    assign LEDR = lights;
+    //assign LEDR = lights;
 
     // Points
     localparam normal_max_hits   = 6'd25,  // 25 light flicks
@@ -85,6 +91,8 @@ module wam(
         use_points = 1'b0;
         use_timer = 1'b0;
         use_lives = 1'b0;
+		
+		total_points <= 6'd0;
 
         current_state <= SETUP;
     end
@@ -95,9 +103,16 @@ module wam(
             SETUP: next_state = play ? RESTART : SETUP;
             WAIT: next_state = (ready_counter == 3'd0) ? PLAY : WAIT;
             PLAY: begin
-                next_state = play ? RESTART : PLAY;
+				if (play)
+					next_state = RESTART;
+				else if (light_counter == max_hits)
+					next_state = GAME_OVER;
+				else
+					next_state = PLAY;
+					
+                //next_state = play ? RESTART : PLAY;
                 // The game is over when the required number of lights have been flicked
-                next_state = (light_counter == max_hits) ? GAME_OVER : PLAY;
+                //next_state = (light_counter == max_hits) ? GAME_OVER : PLAY;
             end
             GAME_OVER: next_state = play ? RESTART : GAME_OVER;        
             RESTART: next_state = WAIT;
@@ -160,21 +175,21 @@ module wam(
     always @(*) 
     begin : Difficulty
         case (difficulty)
-            0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
-                time_between <= 28'd99;
-                time_on <= 28'd99;
+            4'b0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
+                time_between <= 28'd99_999_999;
+                time_on <= 28'd99_999_999;
             end
-            0010: begin  // Level 2: 1 second
+            4'b0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
                 time_on <= 28'd49_999_999;
             end
-            0100: begin  // Level 3: 0.50 seconds (count up to 25_000_000 - 1), 1 second countdown
+            4'b0100: begin  // Level 3: 0.50 seconds (count up to 25_000_000 - 1), 0.5 second countdown
                 time_between <= 28'd24_999_999;
-                time_on <= 28'd49_999_999;
-            end
-            1000: begin  // Level 4: 0.25 seconds (count up to 12_500_000 - 1), 0.50 second countdown
-                time_between <= 28'd12_499_999;
                 time_on <= 28'd24_999_999;
+            end
+            4'b1000: begin  // Level 4: 0.25 seconds (count up to 12_500_000 - 1), 0.25 second countdown
+                time_between <= 28'd12_499_999;
+                time_on <= 28'd12_499_999;
             end
             default: begin  // Same as Level 2: 1 second
                 time_between <= 28'd49_999_999;
@@ -217,8 +232,8 @@ module wam(
     always @(*)
     begin: hits
         case(SW[5])
-            0: max_hits <= normal_max_hits;
-            1: max_hits <= extended_max_hits;
+            1'b0: max_hits <= normal_max_hits;
+            1'b1: max_hits <= extended_max_hits;
             default: max_hits <= normal_max_hits;
         endcase
     end
@@ -242,7 +257,7 @@ module wam(
     wire start_countdown;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd4),  // should be 49_999_999
+    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // should be 49_999_999
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
@@ -259,6 +274,12 @@ module wam(
                       .enable(start_countdown),
                       .reset(clear_memory),
                       .hex(HEX5));
+	
+	// display for HEX4
+	//bdd COUNTDOWN_DIS2(.binary(4'd10),
+    //                  .enable(start_countdown),
+    //                  .reset(clear_memory),
+    //                  .hex(HEX4));
 
     // -------------------------------------------------------------------------
 
@@ -310,20 +331,48 @@ module wam(
                         .light_counter(light_counter));
 
     // Keypad controller
+	wire temp;
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
                          .clear(clear_memory),
                          .valid_key(has_input),
                          .column(column),
-                         .key(key_pressed));
+                         .key(key_pressed),
+						 .key_down(temp));
+						 
+	//assign LEDR[2:0] = GPIO_0[3:1];
+	//assign LEDR[6:4] = GPIO_1[3:1];
+	//assign LEDR[8:6] = column;
+	//assign LEDR[9] = temp;
+						 
+	always @(*) begin
+		case (key_pressed)
+			4'b0000: LEDR[8:0] <= 9'b000000001;
+			4'b0001: LEDR[8:0] <= 9'b000000010;
+			4'b0010: LEDR[8:0] <= 9'b000000100;
+			4'b0011: LEDR[8:0] <= 9'b000001000;
+			4'b0100: LEDR[8:0] <= 9'b000010000;
+			4'b0101: LEDR[8:0] <= 9'b000100000;
+			4'b0110: LEDR[8:0] <= 9'b001000000;
+			4'b0111: LEDR[8:0] <= 9'b010000000;
+			4'b1000: LEDR[8:0] <= 9'b100000000;
+		endcase
+		LEDR[9] <= temp;
+	end
    
-    always @(*)
-    begin: record_hits
-        if (has_input) begin
-            if (light_pos == key_pressed)
-                total_points <= total_points + 1'b1;
-        end
-    end
+    bdd whatever(.binary(key_pressed),
+                      .enable(1'b1),
+                      .reset(1'b1),
+                      .hex(HEX4));
+   
+   
+    //always @(*)
+    //begin: record_hits
+    //    if (has_input) begin
+    //        if (light_pos == key_pressed)
+    //            total_points <= total_points + 1'b1;
+    //    end
+    //end
 endmodule
 
 // Ready countdown timer
@@ -336,9 +385,9 @@ module countdown_timer(
 
     always @(posedge clk or negedge reset) begin
         if (~reset)
-            counter <= 3'd5;
+            counter <= 3'd6;
         else if (counter == 3'd0)
-            counter <= 3'd5;
+            counter <= 3'd6;
         else if (enable) begin
             counter <= counter - 3'b1;
         end
