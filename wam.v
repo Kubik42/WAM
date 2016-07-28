@@ -32,9 +32,9 @@ module wam(
     input [9:0] SW,
     input CLOCK_50,
     //input [2:0] key_matrix_row,
-	input [16:1] GPIO_1,
+	input [16:0] GPIO_1,
     output [2:0] column,
-	output [16:1] GPIO_0,
+	output [16:0] GPIO_0,
     output [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
@@ -260,12 +260,21 @@ module wam(
                             .reset(clear_memory),
                             .hex0(HEX4),
                             .hex1(timer));
-	always @(*) begin // HEX5 display switching
-		if (use_timer)
+                            
+    always @(*) begin // HEX5 display switching
+		if (current_state == PLAY)
 			hex5 <= timer;
 		else
 			hex5 <= ready;
 	end
+	
+	//always @(*) begin // HEX5 display switching (without 5s countdown for timed mode)
+	//	if (use_timer)
+	//		hex5 <= timer;
+	//	else
+	//		hex5 <= ready;
+	//end
+	
 	assign HEX5 = hex5;
 
     // Ready countdown ---------------------------------------------------------
@@ -314,7 +323,7 @@ module wam(
                          .valid_key(has_input),
                          .column(column),
                          .key(key_pressed),
-			.key_down(temp));
+						.key_down(temp));
 	
 	//assign LEDR[2:0] = GPIO_0[3:1];
 	//assign LEDR[6:4] = GPIO_1[3:1];
