@@ -3,7 +3,7 @@
 `include "Controller/light_controller.v"
 `include "Controller/keypad_controller.v"
 `include "Components/clock_divider.v"
-//`include "Components/one_min_count.v"
+`include "Components/one_min_count.v"
 `include "Components/two_digit_decoder.v"
 `include "Components/bin_dec_decoder.v"
 `include "Components/light_decoder.v"
@@ -22,12 +22,10 @@
 //   HEX5: ready timer / timer
 
 // Expansion header for signals input and output
-// p.33 ftp://ftp.altera.com/up/pub/Altera_Material/Boards/DE1/DE1_User_Manual.pdf
-// GPIO_0[11] - 5V DC
-// GPIO_0[12] - GND
-// GPIO_0[9:1] - lights 
-// GPIO_0[18:13] - buttons
-
+// GPIO_0[11] - GND
+// GPIO_0[2:0] - column output
+// GPIO_1[8:0] - buttons input
+// GPIO_1[16:14] - row input
 
 module wam(
     input [0:0] KEY,
@@ -37,19 +35,19 @@ module wam(
 	input [16:1] GPIO_1,
     output [2:0] column,
 	output [16:1] GPIO_0,
-    output reg [9:0] LEDR,
+    output [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
 	
-	wire [2:0] key_matrix_row;
-	assign key_matrix_row = GPIO_1[3:1];
+	//wire [2:0] key_matrix_row;
+	//assign key_matrix_row = GPIO_1[3:1];
 	
-	assign GPIO_0[3:1] = column; 	
+	//assign GPIO_0[3:1] = column; 
 	
     assign play = ~KEY[0];
 
     wire [8:0] lights;
-    //assign LEDR = lights;
+    assign LEDR = lights;
 
     // Points
     localparam normal_max_hits   = 6'd25,  // 25 light flicks
@@ -60,7 +58,7 @@ module wam(
     wire [5:0] light_counter;  // number of lights flicked
 
     // For other game modes
-    // wire [5:0] time_left;
+    wire [5:0] time_left;
     // reg [1:0] total_lives;
     // reg [1:0] lives_left;
 
@@ -91,9 +89,8 @@ module wam(
         use_points = 1'b0;
         use_timer = 1'b0;
         use_lives = 1'b0;
-		
+        
 		total_points <= 6'd0;
-
         current_state <= SETUP;
     end
 
@@ -175,19 +172,19 @@ module wam(
     always @(*) 
     begin : Difficulty
         case (difficulty)
-            4'b0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
-                time_between <= 28'd99_999_999;
-                time_on <= 28'd99_999_999;
+            0001: begin  // Level 1: 2 seconds (count up to 100_000_000 - 1) 
+                time_between <= 28'd99;
+                time_on <= 28'd99;
             end
-            4'b0010: begin  // Level 2: 1 second
+            0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
                 time_on <= 28'd49_999_999;
             end
-            4'b0100: begin  // Level 3: 0.50 seconds (count up to 25_000_000 - 1), 0.5 second countdown
+            0100: begin  // Level 3: 0.50 second (count up to 25_000_000 - 1), 0.5 second countdown
                 time_between <= 28'd24_999_999;
                 time_on <= 28'd24_999_999;
             end
-            4'b1000: begin  // Level 4: 0.25 seconds (count up to 12_500_000 - 1), 0.25 second countdown
+            1000: begin  // Level 4: 0.25 second (count up to 12_500_000 - 1), 0.50 second countdown
                 time_between <= 28'd12_499_999;
                 time_on <= 28'd12_499_999;
             end
@@ -232,8 +229,8 @@ module wam(
     always @(*)
     begin: hits
         case(SW[5])
-            1'b0: max_hits <= normal_max_hits;
-            1'b1: max_hits <= extended_max_hits;
+            0: max_hits <= normal_max_hits;
+            1: max_hits <= extended_max_hits;
             default: max_hits <= normal_max_hits;
         endcase
     end
@@ -250,6 +247,26 @@ module wam(
                                    .reset(clear_memory),
                                    .hex0(HEX2),
                                    .hex1(HEX3));
+	// Timed mode
+	wire [6:0] timer, ready;
+	reg [6:0] hex5;
+     one_min_count ONE_MIN(.clk(CLOCK_50), 
+     				.reset(clear_memory), 
+     				.start_game(flick_lights), 
+     				.counter(time_left));
+     
+     two_digit_decoder TIMER(.b(time_left),
+                            .enable(flick_lights),
+                            .reset(clear_memory),
+                            .hex0(HEX4),
+                            .hex1(timer));
+	always @(*) begin // HEX5 display switching
+		if (use_timer)
+			hex5 <= timer;
+		else
+			hex5 <= ready;
+	end
+	assign HEX5 = hex5;
 
     // Ready countdown ---------------------------------------------------------
 
@@ -257,7 +274,7 @@ module wam(
     wire start_countdown;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // should be 49_999_999
+    clock_divider CD_1Hz(.counter_max(28'd4),  // should be 49_999_999
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
@@ -273,48 +290,7 @@ module wam(
     bdd COUNTDOWN_DIS(.binary({1'b0, ready_counter}),
                       .enable(start_countdown),
                       .reset(clear_memory),
-                      .hex(HEX5));
-	
-	// display for HEX4
-	//bdd COUNTDOWN_DIS2(.binary(4'd10),
-    //                  .enable(start_countdown),
-    //                  .reset(clear_memory),
-    //                  .hex(HEX4));
-
-    // -------------------------------------------------------------------------
-
-    // always @(*)
-    // begin: game_mode
-    //     // By default
-    //     total_lives <= 0; 
-    //     lives_left <= 0;
-
-    //     case (gamemode)
-    //         0001: begin  // Normal
-    //             two_digit_decoder mode0hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-    //             two_digit_decoder mode0points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
-    //         end
-    //         0010: begin  // Timed
-    //             one_min_count countdown(.clk(CLOCK_50), .reset(clear_memory), .start_game(start_game), .counter(time_left));
-    //             two_digit_decoder mode1time(.b(time_left), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-    //             two_digit_decoder mode1points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
-    //         end
-    //         0100: begin  // Deathmatch (1 miss = you lose)
-    //             total_lives <= 2'b1;
-    //             lives_left <= 2'b1;
-    //             bdd mode2lives(.binary({2'd0, lives_left}), .reset(clear_memory), .hex(HEX0));
-    //             two_digit_decoder mode2points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
-    //         end
-    //         1000: begin  // Level continuity (start from 0 go to 4)
-    //             two_digit_decoder mode3hits(.b(max_hits), .reset(clear_memory), .hex0(HEX0), .hex1(HEX1));
-    //             two_digit_decoder mode3points(.b(total_points), .reset(clear_memory), .hex0(HEX2), .hex1(HEX3));
-    //         end
-    //         default: begin  // Same as normal
-    //         end
-    //     endcase
-    // end
-
-    // -------------------------------------------------------------------------
+                      .hex(ready));
     
     wire has_input;
     wire [3:0] light_pos, key_pressed;
@@ -338,41 +314,35 @@ module wam(
                          .valid_key(has_input),
                          .column(column),
                          .key(key_pressed),
-						 .key_down(temp));
-						 
+			.key_down(temp));
+	
 	//assign LEDR[2:0] = GPIO_0[3:1];
 	//assign LEDR[6:4] = GPIO_1[3:1];
 	//assign LEDR[8:6] = column;
 	//assign LEDR[9] = temp;
 						 
-	always @(*) begin
-		case (key_pressed)
-			4'b0000: LEDR[8:0] <= 9'b000000001;
-			4'b0001: LEDR[8:0] <= 9'b000000010;
-			4'b0010: LEDR[8:0] <= 9'b000000100;
-			4'b0011: LEDR[8:0] <= 9'b000001000;
-			4'b0100: LEDR[8:0] <= 9'b000010000;
-			4'b0101: LEDR[8:0] <= 9'b000100000;
-			4'b0110: LEDR[8:0] <= 9'b001000000;
-			4'b0111: LEDR[8:0] <= 9'b010000000;
-			4'b1000: LEDR[8:0] <= 9'b100000000;
-		endcase
-		LEDR[9] <= temp;
-	end
+	//always @(*) begin
+	//	case (key_pressed)
+	//		4'b0000: LEDR[8:0] <= 9'b000000001;
+	//		4'b0001: LEDR[8:0] <= 9'b000000010;
+	//		4'b0010: LEDR[8:0] <= 9'b000000100;
+	//		4'b0011: LEDR[8:0] <= 9'b000001000;
+	//		4'b0100: LEDR[8:0] <= 9'b000010000;
+	//		4'b0101: LEDR[8:0] <= 9'b000100000;
+	//		4'b0110: LEDR[8:0] <= 9'b001000000;
+	//		4'b0111: LEDR[8:0] <= 9'b010000000;
+	//		4'b1000: LEDR[8:0] <= 9'b100000000;
+	//	endcase
+	//	LEDR[9] <= temp;
+	//end
    
-    bdd whatever(.binary(key_pressed),
-                      .enable(1'b1),
-                      .reset(1'b1),
-                      .hex(HEX4));
-   
-   
-    //always @(*)
-    //begin: record_hits
-    //    if (has_input) begin
-    //        if (light_pos == key_pressed)
-    //            total_points <= total_points + 1'b1;
-    //    end
-    //end
+    always @(*)
+    begin: record_hits
+        if (has_input) begin
+            if (light_pos == key_pressed)
+                total_points <= total_points + 1'b1;
+        end
+    end
 endmodule
 
 // Ready countdown timer
@@ -385,9 +355,9 @@ module countdown_timer(
 
     always @(posedge clk or negedge reset) begin
         if (~reset)
-            counter <= 3'd6;
+            counter <= 3'd5;
         else if (counter == 3'd0)
-            counter <= 3'd6;
+            counter <= 3'd5;
         else if (enable) begin
             counter <= counter - 3'b1;
         end

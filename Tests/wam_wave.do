@@ -45,3 +45,11 @@ run 2 ns
 
 force {KEY[0]} 1
 run 12000 ns
+
+# Setting game mode: Timed
+force {SW[9:6]} 0100
+force {KEY[0]} 0
+run 2 ns
+
+force {KEY[0]} 1
+run 12000 ns

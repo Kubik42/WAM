@@ -5,7 +5,7 @@ vlib work
 
 # Compile all verilog modules in mux.v to working dir;
 # could also have multiple verilog files.
-vlog one_min_count.v 
+vlog ../Components/one_min_count.v 
 
 # Load simulation using top level simulation module.
 vsim one_min_count
