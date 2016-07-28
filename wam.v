@@ -355,9 +355,9 @@ module countdown_timer(
 
     always @(posedge clk or negedge reset) begin
         if (~reset)
-            counter <= 3'd5;
+            counter <= 3'd6;
         else if (counter == 3'd0)
-            counter <= 3'd5;
+            counter <= 3'd6;
         else if (enable) begin
             counter <= counter - 3'b1;
         end
