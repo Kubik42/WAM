@@ -6,7 +6,6 @@
 `include "../Components/debouncer.v"
 `include "../Components/encoder.v"
 `include "../Components/column_decoder.v"
-//`include "../Components/clock_divider.v"
 `include "../Components/key_register.v"
 `include "../Components/valid_key_register.v"
 
@@ -16,8 +15,7 @@ module keypad_controller(
     input clear,
     output valid_key,
     output [2:0] column,
-    output [3:0] key,
-	output key_down
+    output [3:0] key
     );
 
     // Clock dividers ----------------------------------------------------------
@@ -86,7 +84,7 @@ module keypad_controller(
 
     // Key register
     keyreg KEYREG(.pressed({counter, row_number}),
-                  .clk(key_down),	
+                  .clk(key_down), 
                   .reset(clear),
                   .key(key));
 
