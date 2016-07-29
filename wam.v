@@ -106,10 +106,6 @@ module wam(
 					next_state = GAME_OVER;
 				else
 					next_state = PLAY;
-					
-                //next_state = play ? RESTART : PLAY;
-                // The game is over when the required number of lights have been flicked
-                //next_state = (light_counter == max_hits) ? GAME_OVER : PLAY;
             end
             GAME_OVER: next_state = play ? RESTART : GAME_OVER;        
             RESTART: next_state = WAIT;
@@ -313,14 +309,12 @@ module wam(
                         .light_counter(light_counter));
 
     // Keypad controller
-	wire temp;
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
                          .clear(clear_memory),
                          .valid_key(has_input),
                          .column(column),
-                         .key(key_pressed),
-						.key_down(temp));
+                         .key(key_pressed));
 	
 	//assign LEDR[2:0] = GPIO_0[3:1];
 	//assign LEDR[6:4] = GPIO_1[3:1];
