@@ -25,29 +25,103 @@ force {clear} 1
 
 # No rows
 force {row} 3'b111
-run 10000 ns
+run 9741 ns
+
+# --------------------
 
 # Key 1
-force {row} 3'b110
-run 2000 ns
+force {row} 3'b011
+run 3247 ns
 
 force {row} 3'b111
-run 2000 ns
+run 6494 ns
+
+# --------------------
+
+run 3247 ns
+
+# Key 2
+force {row} 3'b011
+run 3247 ns
+
+force {row} 3'b111
+run 3247 ns
+
+# --------------------
+
+run 6494 ns
+
+# Key 3
+force {row} 3'b011
+run 3247 ns
+
+force {row} 3'b111
+run 9741 ns
+
+# --------------------
 
 # Key 4
 force {row} 3'b101
-run 5500 ns
+run 3247 ns
 
 force {row} 3'b111
-run 2000 ns
+run 6494 ns
+
+# --------------------
+
+run 3247 ns
+
+# Key 5
+force {row} 3'b101
+run 3247 ns
+
+force {row} 3'b111
+run 3247 ns
+
+# --------------------
+
+run 6494 ns
+
+# Key 6
+force {row} 3'b101
+run 3247 ns
+
+force {row} 3'b111
+run 9741 ns
+
+# --------------------
 
 # Key 7
-force {row} 3'b011
-run 10000 ns
+force {row} 3'b110
+run 3247 ns
 
 force {row} 3'b111
-run 2000 ns
+run 6494 ns
 
-# More than one button press
+# --------------------
+
+run 3247 ns
+
+# Key 8
+force {row} 3'b110
+run 3247 ns
+
+force {row} 3'b111
+run 3247 ns
+
+# --------------------
+
+run 6494 ns
+
+# Key 9
+force {row} 3'b110
+run 3247 ns
+
+force {row} 3'b111
+run 9741 ns
+
+# --------------------
+
+# Multiple keys pressed at once
 force {row} 3'b100
-run 10000 ns
+run 9741 ns 
