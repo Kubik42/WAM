@@ -18,12 +18,23 @@ module keypad_controller(
     output [3:0] key
     );
 
+    reg current_state, next_state;
+    reg clear_memory;
+
+    // States
+    localparam SCAN  = 1'b0,  // Scan keypad
+               CLEAR = 1'b1;  // Clear registers
+
+    initial begin
+        clear_memory = 1'b0;
+        current_state <= SCAN;
+    end
+
     // Clock dividers ----------------------------------------------------------
 
     wire clk_1MHz, clk_183Hz, clk_31Hz;  // Scan rate is approx six times slower than the debounce clock
-    wire [27:0] counter_1MHz;
-    wire [27:0] counter_183Hz;
-    wire [27:0] counter_31Hz;
+    wire [27:0] counter_1MHz, counter_183Hz, counter_31Hz;
+    wire [27:0] scan_counter;
     // THESE ARE THE REAL TIMES, UNCOMMENT THEM WHEN NOT TESTING
     // localparam counter_max_1MHz  = 28'd49,     // Relative to 50Mhz
     //            counter_max_183Hz = 28'd5464,   // Relative to 1MHz
@@ -34,9 +45,11 @@ module keypad_controller(
                counter_max_183Hz = 28'd50,
                counter_max_31Hz  = 28'd270;
 
+    localparam scan_counter_max = 28'd810;  // (31Hz * (1Mhz + 1)) / 2
+
     clock_divider CD_1MHz(.counter_max(counter_max_1MHz),
                           .clk(clk),
-                          .enable(1'b1),
+                          .enable(clear_memory),
                           .reset(clear),
                           .counter(counter_1MHz));
 
@@ -44,7 +57,7 @@ module keypad_controller(
 
     clock_divider CD_183Hz(.counter_max(counter_max_183Hz),
                            .clk(clk_1MHz),
-                           .enable(1'b1),
+                           .enable(clear_memory),
                            .reset(clear),
                            .counter(counter_183Hz));
 
@@ -52,11 +65,41 @@ module keypad_controller(
 
     clock_divider CD_31Hz(.counter_max(counter_max_31Hz),
                           .clk(clk_1MHz),
-                          .enable(1'b1),
+                          .enable(clear_memory),
                           .reset(clear),
                           .counter(counter_31Hz));
 
     assign clk_31Hz = (counter_31Hz == 28'd0) ? 1 : 0; 
+
+    // Full scan clock - for clearing memory
+    clock_divider CD_SCAN(.counter_max(scan_counter_max),
+                          .clk(clk_1MHz),
+                          .enable(clear_memory),
+                          .reset(clear),
+                          .counter(scan_counter));
+
+    // State machine -----------------------------------------------------------
+
+    always @(*)
+    begin: state_table
+        case (current_state)
+            SCAN: next_state = (scan_counter == 28'd0) ? CLEAR : SCAN;
+            CLEAR: next_state = SCAN;
+        endcase
+    end
+
+    always @(*)
+    begin: enable_signals
+        case (current_state)
+            SCAN: clear_memory = 1'b1;
+            CLEAR: clear_memory = 1'b0;
+        endcase
+    end
+
+    always @(posedge clk)
+    begin: states
+        current_state <= next_state;
+    end
 
     // -------------------------------------------------------------------------
     
@@ -85,12 +128,12 @@ module keypad_controller(
     // Key register
     keyreg KEYREG(.pressed({counter, row_number}),
                   .clk(key_down), 
-                  .reset(clear),
+                  .reset(clear & clear_memory),
                   .key(key));
 
     // Valid key register
     valkeyreg VALKEYREG(.clk(key_down),
-                        .reset(clear),
+                        .reset(clear & clear_memory),
                         .valid_key(valid_key));
 
     assign column = ~column_key;
