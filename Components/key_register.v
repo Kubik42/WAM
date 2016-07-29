@@ -18,7 +18,7 @@ module keyreg(
 
 	always @(posedge clk or negedge reset) begin
 		if (~reset)
-			key <= 4'b0;
+			key <= 4'd15;
 		else
 			key <= key_number;
 	end
