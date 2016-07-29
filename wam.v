@@ -248,8 +248,8 @@ module wam(
                                    .hex0(HEX2),
                                    .hex1(HEX3));
 	// Timed mode
-	wire [6:0] timer, ready;
-	reg [6:0] hex5;
+	wire [6:0] timer0, timer1, ready;
+	reg [6:0] hex5, hex4;
      one_min_count ONE_MIN(.clk(CLOCK_50), 
      				.reset(clear_memory), 
      				.start_game(flick_lights), 
@@ -258,23 +258,20 @@ module wam(
      two_digit_decoder TIMER(.b(time_left),
                             .enable(flick_lights),
                             .reset(clear_memory),
-                            .hex0(HEX4),
-                            .hex1(timer));
-                            
-    always @(*) begin // HEX5 display switching
-		if (current_state == PLAY)
-			hex5 <= timer;
-		else
+                            .hex0(timer0),
+                            .hex1(timer1));
+			    
+	always @(*) begin // HEX5 display switching
+		if (current_state == PLAY && game_mode == 4'b0100) begin
+			hex4 <= timer0;
+			hex5 <= timer1;
+		end
+		else begin
+			hex4 <= 7'b1111111;
 			hex5 <= ready;
+		end
 	end
-	
-	//always @(*) begin // HEX5 display switching (without 5s countdown for timed mode)
-	//	if (use_timer)
-	//		hex5 <= timer;
-	//	else
-	//		hex5 <= ready;
-	//end
-	
+	assign HEX4 = hex4;
 	assign HEX5 = hex5;
 
     // Ready countdown ---------------------------------------------------------
