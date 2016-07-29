@@ -5,21 +5,21 @@
 `include "key_decoder.v"
 
 module keyreg(
-	input [3:0] pressed,
-	input clk,
-	input reset,
-	output reg [3:0] key
-	);
+    input [3:0] pressed,
+    input clk,
+    input reset,
+    output reg [3:0] key
+    );
 
-	wire [3:0] key_number;
+    wire [3:0] key_number;
 
-	key_decoder DEC(.key(pressed),
-					.key_number(key_number));
+    key_decoder DEC(.key(pressed),
+                    .key_number(key_number));
 
-	always @(posedge clk or negedge reset) begin
-		if (~reset)
-			key <= 4'd15;
-		else
-			key <= key_number;
-	end
+    always @(posedge clk or negedge reset) begin
+        if (~reset)
+            key <= 4'd15;  // Non-existent key
+        else
+            key <= key_number;
+    end
 endmodule
