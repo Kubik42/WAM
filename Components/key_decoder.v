@@ -19,7 +19,7 @@ module key_decoder(
             4'b0010: key_number <= 4'd6;
             4'b0110: key_number <= 4'd7;
             4'b1010: key_number <= 4'd8;
-            default: key_number <= 4'd9;  // This key doesn't exist
+            default: key_number <= 4'd15;  // This key doesn't exist
         endcase
     end
 endmodule
