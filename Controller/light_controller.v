@@ -15,7 +15,8 @@ module light_controller(
     input reset,
     output reg [8:0] lights,        // Light signals to the board
     output [3:0] light_pos,         // Light position on board
-    output reg [5:0] light_counter  // Number of light flicks
+    output reg [5:0] light_counter,  // Number of light flicks
+    output light_change
     );
 
     wire [27:0] counter_btwn;  // Time left until the next light flick
@@ -132,4 +133,6 @@ module light_controller(
             current_state <= next_state;
         end
     end
+    
+    assign light_change = (counter_on == 28'd0) ? 1 : 0;
 endmodule
