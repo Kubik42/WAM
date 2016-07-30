@@ -33,9 +33,9 @@ module wam(
     input [9:0] SW,
     input CLOCK_50,
     input [2:0] key_matrix_row,  // -=-=-=-=-=COMMENT OUT WHEN RUNNING-=-=-=-=-=
-    input [16:0] GPIO_1,
+    //input [16:0] GPIO_1,
     output [2:0] column,
-    output [16:0] GPIO_0,
+    //output [16:0] GPIO_0,
     output [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
@@ -105,7 +105,9 @@ module wam(
             PLAY: begin
                 if (play)
                     next_state = RESTART;
-                else if (light_counter == max_hits)
+                else if (use_points && light_counter == max_hits)
+                    next_state = GAME_OVER;
+                else if (use_timer && time_left == 28'd0)
                     next_state = GAME_OVER;
                 else
                     next_state = PLAY;
@@ -173,8 +175,8 @@ module wam(
     begin: difficulty_level
         case (difficulty)
             4'b0001: begin  // Level 1: 2 seconds
-                time_between <= 28'd99_999_999;
-                time_on <= 28'd99_999_999;
+                time_between <= 28'd99;
+                time_on <= 28'd99;
             end
             4'b0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
@@ -258,7 +260,7 @@ module wam(
     wire [6:0] countdown_display;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
+    clock_divider CD_1Hz(.counter_max(28'd4),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
@@ -283,11 +285,11 @@ module wam(
     reg [6:0] hex5, hex4;
     one_min_count ONE_MIN(.clk(CLOCK_50), 
                           .reset(clear_memory), 
-                          .start_game(use_timer), 
+                          .start_game(use_timer && ~countdown), 
                           .counter(time_left));
      
     two_digit_decoder TIMER(.b(time_left),
-                            .enable(use_timer),
+                            .enable(use_timer && ~countdown),
                             .reset(clear_memory),
                             .hex0(timer0),
                             .hex1(timer1));
