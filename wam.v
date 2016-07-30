@@ -400,8 +400,7 @@ module wam(
     
     always @(posedge light_change)
     begin: lost_life
-    if (use_lives) begin
-        if (light_pos != key_pressed)
+    if (use_lives && (light_pos != key_pressed)) begin
             	lives_left <= lives_left - 1'b1;
         end
     end
