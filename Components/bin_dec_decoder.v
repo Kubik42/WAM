@@ -15,7 +15,7 @@ module bdd(
 
     always @(*)
     	if (~reset)
-    		hex <= 7'b1000000;
+    		hex <= 7'b1111111;
     	else if (enable) begin
     		case (binary)
                 4'h0: hex <= 7'b1000000;
@@ -32,6 +32,4 @@ module bdd(
 				default: hex <= 7'b1111111;
 			endcase
 		end
-        else // If the screen is not enabled, display nothing
-            hex <= 7'b1111111;
 endmodule
