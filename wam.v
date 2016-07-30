@@ -9,9 +9,10 @@
 `include "Components/light_decoder.v"
 
 // Options:
-//   KEY[0] - reset
+//   KEY[0]  - reset
+//   KEY[1]  - life counter
 //   SW[3:0] - difficulty
-//   SW[9:6] - game mode
+//   SW[9:7] - game mode
 //   SW[5]   - total game points
 
 // Displays:
@@ -23,13 +24,13 @@
 //   HEX5: ready timer / game mode timer
 
 // Expansion header for signals input and output:
-//   GPIO_0[11] - GND
-//   GPIO_0[2:0] - column output
-//   GPIO_1[8:0] - buttons input
+//   GPIO_0[11]    - GND
+//   GPIO_0[2:0]   - column output
+//   GPIO_1[8:0]   - buttons input
 //   GPIO_1[16:14] - row input
 
 module wam(
-    input [0:0] KEY,
+    input [1:0] KEY,
     input [9:0] SW,
     input CLOCK_50,
     input [2:0] key_matrix_row,  // -=-=-=-=-=COMMENT OUT WHEN RUNNING-=-=-=-=-=
@@ -47,6 +48,7 @@ module wam(
     //assign GPIO_0[3:1] = column; 
     
     assign play = ~KEY[0];
+    assign extra_life = ~KEY[1];
 
     wire [8:0] lights;
     assign LEDR = lights;
@@ -61,8 +63,8 @@ module wam(
 
     // For other game modes
     wire [5:0] time_left;
-    // reg [1:0] total_lives;
-    // reg [1:0] lives_left;
+    reg [3:0] total_lives;
+    reg [3:0] lives_left;
 
 
     // State machine -----------------------------------------------------------
@@ -92,6 +94,9 @@ module wam(
         use_points = 1'b0;
         use_timer = 1'b0;
         use_lives = 1'b0;
+
+        total_lives <= 4'd0;
+        lives_left <= 4'd0;
         
         total_points <= 6'd0;
         current_state <= SETUP;
@@ -108,6 +113,8 @@ module wam(
                 else if (use_points && light_counter == max_hits)
                     next_state = GAME_OVER;
                 else if (use_timer && time_left == 28'd0)
+                    next_state = GAME_OVER;
+                else if (use_lives && lives_left == 4'd0)
                     next_state = GAME_OVER;
                 else
                     next_state = PLAY;
@@ -149,6 +156,7 @@ module wam(
                 load_seed = 1'b0;
                 clear_memory = 1'b0;
                 flick_lights = 1'b0;
+                lives_left <= total_lives;
             end
         endcase
     end
@@ -165,7 +173,7 @@ module wam(
     assign difficulty = SW[3:0];
 
     wire [3:0] game_mode;
-    assign game_mode = SW[9:6];
+    assign game_mode = SW[9:7];
 
     // Counters/timers
     reg [27:0] time_between;  // Time between subsequent light flicks
@@ -200,26 +208,26 @@ module wam(
     always @(*)
     begin: mode
         case (game_mode)
-            4'b1000: begin  // Normal mode
+            3'b100: begin  // Normal mode
                 use_points = 1'b1;
                 use_timer = 1'b0;
                 use_lives = 1'b0;
             end
-            4'b0100: begin  // Timed mode
+            3'b010: begin  // Timed mode
                 use_points = 1'b0;
                 use_timer = 1'b1;
                 use_lives = 1'b0;
             end
-            4'b0010: begin  // Lives mode -=-=-=-= NOT IMPLEMENTED YET -=-=-=-=-=
+            3'b001: begin  // Lives mode -=-=-=-= NOT IMPLEMENTED YET -=-=-=-=-=
                 use_points = 1'b0;
                 use_timer = 1'b0;
                 use_lives = 1'b1;
             end
-            4'b0001: begin  // Continuity -=-=-=-=-=-= MAY BE TOO HARD TO IMPLEMENT???, same as normal rn -=-=-=-=-=-=
-                use_points = 1'b1;
-                use_timer = 1'b0;
-                use_lives = 1'b0;
-            end
+            // 4'b0001: begin  // Continuity -=-=-=-=-=-= MAY BE TOO HARD TO IMPLEMENT???, same as normal rn -=-=-=-=-=-=
+            //     use_points = 1'b1;
+            //     use_timer = 1'b0;
+            //     use_lives = 1'b0;
+            // end
             default: begin  // Same as normal
                 use_points = 1'b1;
                 use_timer = 1'b0;
@@ -228,13 +236,25 @@ module wam(
         endcase
     end
 
+    always @(posedge extra_life)
+    begin: life_count
+        if (current_state == SETUP || current_state == GAME_OVER) begin
+            if (total_lives == 4'd9)  // 9 lives maximum, 1 life minimum
+                total_lives <= 4'd1;
+            else
+                total_lives <= total_lives + 4'd1;
+        end
+    end
+
     always @(*)
     begin: point_hits
-        case(SW[5])
-            1'b0: max_hits <= normal_max_hits;
-            1'b1: max_hits <= extended_max_hits;
-            default: max_hits <= normal_max_hits;
-        endcase
+        if (current_state == SETUP || current_state == GAME_OVER) begin
+            case (SW[5])
+                1'b0: max_hits <= normal_max_hits;
+                1'b1: max_hits <= extended_max_hits;
+                default: max_hits <= normal_max_hits;
+            endcase
+        end
     end
 
 
@@ -282,27 +302,59 @@ module wam(
     // Timed mode timer --------------------------------------------------------
 
     wire [6:0] timer0, timer1;
-    reg [6:0] hex5, hex4;
+
     one_min_count ONE_MIN(.clk(CLOCK_50), 
                           .reset(clear_memory), 
-                          .start_game(use_timer && ~countdown), 
+                          .start_game(use_timer & ~countdown), 
                           .counter(time_left));
      
     two_digit_decoder TIMER(.b(time_left),
-                            .enable(use_timer && ~countdown),
+                            .enable(use_timer & ~countdown),
                             .reset(clear_memory),
                             .hex0(timer0),
                             .hex1(timer1));
-                
-    always @(*)  // HEX5 display switching
+
+
+    // Lives mode display ------------------------------------------------------
+
+    wire [6:0] total_lives_count, player_lives_count;
+
+    bdd TOTAL_LIVES(.binary(total_lives),
+                    .enable(use_lives & ~countdown),
+                    .reset(clear_memory),
+                    .hex(total_lives_count));
+
+    bdd PLAYER_LIVES(.binary(lives_left),
+                     .enable(user_lives & ~countdown),
+                     .reset(clear_memory),
+                     .hex(player_lives_count));
+
+
+    // Display switching -------------------------------------------------------
+
+    reg [6:0] hex5, hex4;
+      
+    always @(*)
     begin: timer_display_switch
-        if (current_state == PLAY && use_timer) begin
-            hex4 <= timer0;
-            hex5 <= timer1;
+        if (current_state == WAIT) begin
+            if (countdown) begin
+                hex4 <= 7'b1111111;
+                hex5 <= countdown_display;               
+            end
         end
         else begin
-            hex4 <= 7'b1111111;
-            hex5 <= countdown_display;
+            if (use_timer) begin
+                hex4 <= timer0;
+                hex5 <= timer1;
+            end            
+            else if (use_lives) begin
+                hex4 <= total_lives_count;
+                hex5 <= player_lives_count;
+            end
+            else begin
+                hex4 <= 7'b1111111;
+                hex5 <= 7'b1111111;
+            end
         end
     end
 
