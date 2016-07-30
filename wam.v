@@ -296,15 +296,13 @@ module wam(
                 
     always @(*)  // HEX5 display switching
     begin: timer_display_switch
-        if (current_state == PLAY) begin
-            if (use_points) begin
-                hex4 <= 7'b1111111;
-                hex5 <= countdown_display;               
-            end
-            else if (use_timer) begin
-                hex4 <= timer0;
-                hex5 <= timer1; 
-            end
+        if (current_state == PLAY && use_timer) begin
+            hex4 <= timer0;
+            hex5 <= timer1;
+        end
+        else begin
+            hex4 <= 7'b1111111;
+            hex5 <= countdown_display;
         end
     end
 
