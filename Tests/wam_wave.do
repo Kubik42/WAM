@@ -25,7 +25,7 @@ force {SW[3:0]} 4'b0001
 force {SW[5]} 0
 
 # Setting game mode
-force {SW[9:6]} 1000
+force {SW[9:7]} 100
 
 # Input
 force {key_matrix_row} 111
@@ -47,7 +47,7 @@ force {KEY[0]} 1
 run 12000 ns
 
 # Setting game mode: Timed
-force {SW[9:6]} 0100
+force {SW[9:7]} 010
 force {KEY[0]} 0
 run 2 ns
 
@@ -61,3 +61,30 @@ run 2 ns
 force {KEY[0]} 1
 run 5000 ns
 
+# Setting game mode: Lives
+force {SW[9:7]} 001
+
+# Increasing life count to 3
+force {KEY[1]} 1
+run 2 ns
+
+force {KEY[1]} 0
+run 2 ns
+
+force {KEY[1]} 1
+run 2 ns
+
+force {KEY[1]} 0
+run 2 ns
+
+force {KEY[1]} 1
+run 2 ns
+
+force {KEY[1]} 0
+run 2 ns
+
+force {KEY[0]} 0
+run 10 ns
+
+force {KEY[0]} 1
+run 5000 ns
