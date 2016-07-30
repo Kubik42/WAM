@@ -2,7 +2,7 @@
 // Counts down from 60 to 0 (111100 to 0000000)
 
 `timescale 1ns / 1ns // `timescale time_unit/time_precision
-`include "clock_divider.v"
+//`include "clock_divider.v"
 
 module one_min_count(
     input clk,						// CLOCK_50
