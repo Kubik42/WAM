@@ -32,4 +32,6 @@ module bdd(
 				default: hex <= 7'b1111111;
 			endcase
 		end
+        else // If the screen is not enabled, display nothing
+            hex <= 7'b1111111;
 endmodule
