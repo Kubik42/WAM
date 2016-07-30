@@ -52,4 +52,12 @@ force {KEY[0]} 0
 run 2 ns
 
 force {KEY[0]} 1
-run 12000 ns
+run 5000 ns
+
+# Starting new game
+force {KEY[0]} 0
+run 2 ns
+
+force {KEY[0]} 1
+run 5000 ns
+
