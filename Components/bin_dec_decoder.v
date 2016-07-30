@@ -28,7 +28,6 @@ module bdd(
                 4'h7: hex <= 7'b1111000;
                 4'h8: hex <= 7'b0000000;
                 4'h9: hex <= 7'b0010000;
-				4'd10: hex <= 7'b1111111;
 				default: hex <= 7'b1111111;
 			endcase
 		end
