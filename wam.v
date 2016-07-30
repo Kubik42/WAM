@@ -325,7 +325,7 @@ module wam(
                     .hex(total_lives_count));
 
     bdd PLAYER_LIVES(.binary(lives_left),
-                     .enable(user_lives & ~countdown),
+                     .enable(use_lives & ~countdown),
                      .reset(clear_memory),
                      .hex(player_lives_count));
 
