@@ -36,14 +36,14 @@ module keypad_controller(
     wire [27:0] counter_1MHz, counter_183Hz, counter_31Hz;
     wire [27:0] scan_counter;
     // THESE ARE THE REAL TIMES, UNCOMMENT THEM WHEN NOT TESTING
-    // localparam counter_max_1MHz  = 28'd49,     // Relative to 50Mhz
-    //            counter_max_183Hz = 28'd5464,   // Relative to 1MHz
-    //            counter_max_31Hz  = 28'd32257;  // Relative to 1MHz
+    localparam counter_max_1MHz  = 28'd49,     // Relative to 50Mhz
+               counter_max_183Hz = 28'd5464,   // Relative to 1MHz
+               counter_max_31Hz  = 28'd32257;  // Relative to 1MHz
 
     // JUST FOR TESTING, COMMENT OUT WHEN NOT TESTING
-    localparam counter_max_1MHz  = 28'd5,
-               counter_max_183Hz = 28'd50,
-               counter_max_31Hz  = 28'd270;
+    // localparam counter_max_1MHz  = 28'd5,
+    //            counter_max_183Hz = 28'd50,
+    //            counter_max_31Hz  = 28'd270;
 
     localparam scan_counter_max = 28'd810;  // (31Hz * (1Mhz + 1)) / 2
 
