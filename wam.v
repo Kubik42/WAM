@@ -218,7 +218,7 @@ module wam(
                 use_timer = 1'b1;
                 use_lives = 1'b0;
             end
-            3'b001: begin  // Lives mode -=-=-=-= NOT IMPLEMENTED YET -=-=-=-=-=
+            3'b001: begin  // Lives mode 
                 use_points = 1'b0;
                 use_timer = 1'b0;
                 use_lives = 1'b1;
@@ -364,7 +364,7 @@ module wam(
 
     // Controllers -------------------------------------------------------------
     
-    wire has_input;
+    wire has_input, light_change;
     wire [3:0] light_pos, key_pressed;
     
     light_controller LC(.time_on(time_on),
@@ -375,7 +375,8 @@ module wam(
                         .reset(clear_memory),
                         .lights(lights),
                         .light_pos(light_pos),
-                        .light_counter(light_counter));
+                        .light_counter(light_counter),
+                        .light_change(light_change));
 
     keypad_controller KC(.row(key_matrix_row),
                          .clk(CLOCK_50),
@@ -383,8 +384,8 @@ module wam(
                          .valid_key(has_input),
                          .column(column),
                          .key(key_pressed));
-
  
+
     // Hit recording -----------------------------------------------------------
 
     always @(*)
@@ -392,6 +393,15 @@ module wam(
         if (has_input) begin
             if (light_pos == key_pressed)
                 total_points <= total_points + 1'b1;
+        end
+    end
+    
+    // Lives recording -----------------------------------------------------------
+    
+    always @(posedge light_change)
+    begin: lost_life
+    if (use_lives && (light_pos != key_pressed)) begin
+            	lives_left <= lives_left - 1'b1;
         end
     end
 endmodule
