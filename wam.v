@@ -223,11 +223,6 @@ module wam(
                 use_timer = 1'b0;
                 use_lives = 1'b1;
             end
-            // 4'b0001: begin  // Continuity -=-=-=-=-=-= MAY BE TOO HARD TO IMPLEMENT???, same as normal rn -=-=-=-=-=-=
-            //     use_points = 1'b1;
-            //     use_timer = 1'b0;
-            //     use_lives = 1'b0;
-            // end
             default: begin  // Same as normal
                 use_points = 1'b1;
                 use_timer = 1'b0;
@@ -364,7 +359,7 @@ module wam(
 
     // Controllers -------------------------------------------------------------
     
-    wire has_input, light_change;
+    wire has_input, key_down, light_change;
     wire [3:0] light_pos, key_pressed;
     
     light_controller LC(.time_on(time_on),
@@ -383,14 +378,15 @@ module wam(
                          .clear(clear_memory),
                          .valid_key(has_input),
                          .column(column),
-                         .key(key_pressed));
+                         .key(key_pressed),
+                         .key_down(key_down));
  
 
     // Hit recording -----------------------------------------------------------
 
     always @(*)
     begin: record_hits
-        if (has_input) begin
+        if (key_down) begin
             if (light_pos == key_pressed)
                 total_points <= total_points + 1'b1;
         end
