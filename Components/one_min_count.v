@@ -7,7 +7,7 @@
 module one_min_count(
     input clk,						// CLOCK_50
     input reset,
-    input start_game,
+    input enable,
     output reg [5:0] counter
     );
     
@@ -16,9 +16,9 @@ module one_min_count(
     wire clock_control;
     
     // 1Hz clock
-    clock_divider CD_1Hz(.counter_max(28'd4),  // -=-=-=-=-=-=49_999_999 WHEN RUNNING -=-=-=-=-=-=
+    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // -=-=-=-=-=-=49_999_999 WHEN RUNNING -=-=-=-=-=-=
                          .clk(clk),
-                         .enable(start_game),
+                         .enable(enable),
                          .reset(reset),
                          .counter(counter_1Hz));
 
@@ -28,7 +28,7 @@ module one_min_count(
 	begin 
 		if (!reset)
 			counter <= 6'd60;
-		else if (start_game) begin
+		else if (enable) begin
 			if (counter != 6'd0)
 				counter <= counter - 1'b1;
 		end

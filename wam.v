@@ -300,7 +300,7 @@ module wam(
 
     one_min_count ONE_MIN(.clk(CLOCK_50), 
                           .reset(clear_memory), 
-                          .start_game(use_timer & ~countdown), 
+                          .enable(use_timer & ~countdown), 
                           .counter(time_left));
      
     two_digit_decoder TIMER(.b(time_left),
