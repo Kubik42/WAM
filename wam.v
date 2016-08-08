@@ -26,32 +26,33 @@
 // Expansion header for signals input and output:
 //   GPIO_0[11]    - GND
 //   GPIO_0[2:0]   - column output
-//   GPIO_1[8:0]   - buttons input
-//   GPIO_1[16:14] - row input
+//   GPIO_0[20:12] - lights output
+//   GPIO_1[2:0]   - row input
 
 module wam(
     input [1:0] KEY,
     input [9:0] SW,
     input CLOCK_50,
-    input [2:0] key_matrix_row,  // -=-=-=-=-=COMMENT OUT WHEN RUNNING-=-=-=-=-=
-    //input [16:0] GPIO_1,
+    //input [2:0] key_matrix_row,  // -=-=-=-=-=COMMENT OUT WHEN RUNNING-=-=-=-=-=
+    input [20:0] GPIO_1,
     output [2:0] column,
-    //output [16:0] GPIO_0,
+    output [20:0] GPIO_0,
     output [8:0] LEDR,
     output [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     );
     
     // --=-=-=-=-=-UNCOMMENT WHEN RUNNING-=-=-=-=-=-==-=
-    //wire [2:0] key_matrix_row;
-    //assign key_matrix_row = GPIO_1[3:1];
+    wire [2:0] key_matrix_row;
+    assign key_matrix_row = GPIO_1[2:0];
     
-    //assign GPIO_0[3:1] = column; 
+    assign GPIO_0[2:0] = column; 
     
     assign play = ~KEY[0];
     assign extra_life = ~KEY[1];
 
     wire [8:0] lights;
-    assign LEDR = lights;
+    assign GPIO_0[20:12] = ~lights;
+    //assign LEDR = lights;
 
     // Points
     localparam normal_max_hits   = 6'd25,  // 25 light flicks
@@ -155,8 +156,7 @@ module wam(
                 countdown = 1'b0;
                 load_seed = 1'b0;
                 clear_memory = 1'b0;
-                flick_lights = 1'b0;
-                lives_left <= total_lives;
+                flick_lights = 1'b0;                
             end
         endcase
     end
@@ -183,8 +183,8 @@ module wam(
     begin: difficulty_level
         case (difficulty)
             4'b0001: begin  // Level 1: 2 seconds
-                time_between <= 28'd99_999_999;
-                time_on <= 28'd99_999_999;
+                time_between <= 28'd99;
+                time_on <= 28'd99;
             end
             4'b0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
@@ -275,7 +275,7 @@ module wam(
     wire [6:0] countdown_display;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
+    clock_divider CD_1Hz(.counter_max(28'd4),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
@@ -380,6 +380,25 @@ module wam(
                          .column(column),
                          .key(key_pressed),
                          .key_down(key_down));
+
+
+    // For testing lights
+    // always @(*)
+    // begin
+    //     LEDR[9] <= temp;
+    //     case (key_pressed)
+    //         4'b0000: LEDR[8:0] <= 9'b000000001;
+    //         4'b0001: LEDR[8:0] <= 9'b000000010;
+    //         4'b0010: LEDR[8:0] <= 9'b000000100;
+    //         4'b0011: LEDR[8:0] <= 9'b000001000;
+    //         4'b0100: LEDR[8:0] <= 9'b000010000;
+    //         4'b0101: LEDR[8:0] <= 9'b000100000;
+    //         4'b0110: LEDR[8:0] <= 9'b001000000;
+    //         4'b0111: LEDR[8:0] <= 9'b010000000;
+    //         4'b1000: LEDR[8:0] <= 9'b100000000;
+    //     endcase
+    //     LEDR[9] <= temp;
+    // end
  
 
     // Hit recording -----------------------------------------------------------
@@ -396,8 +415,11 @@ module wam(
     
     always @(posedge light_change)
     begin: lost_life
-    if (use_lives && (light_pos != key_pressed)) begin
-            	lives_left <= lives_left - 1'b1;
+        if (use_lives) begin
+            if (current_state == RESTART)
+                lives_left <= total_lives;
+            else if (key_down && (light_pos != key_pressed))
+                lives_left <= lives_left - 1'b1;
         end
     end
 endmodule
