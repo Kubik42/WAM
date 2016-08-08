@@ -16,7 +16,7 @@ module one_min_count(
     wire clock_control;
     
     // 1Hz clock
-    clock_divider CD_1Hz(.counter_max(28'd4),  // -=-=-=-=-=-=49_999_999 WHEN RUNNING -=-=-=-=-=-=
+    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // -=-=-=-=-=-=49_999_999 WHEN RUNNING -=-=-=-=-=-=
                          .clk(clk),
                          .enable(enable),
                          .reset(reset),

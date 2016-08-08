@@ -183,8 +183,8 @@ module wam(
     begin: difficulty_level
         case (difficulty)
             4'b0001: begin  // Level 1: 2 seconds
-                time_between <= 28'd99;
-                time_on <= 28'd99;
+                time_between <= 28'd99_999_999;
+                time_on <= 28'd99_999_999;
             end
             4'b0010: begin  // Level 2: 1 second
                 time_between <= 28'd49_999_999;
@@ -275,7 +275,7 @@ module wam(
     wire [6:0] countdown_display;
 
     // Countdown every 1 second
-    clock_divider CD_1Hz(.counter_max(28'd4),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
+    clock_divider CD_1Hz(.counter_max(28'd49_999_999),  // -=-=-=-=-=-49_999_999 WHEN RUNNING -=-=-=-=-
                          .clk(CLOCK_50),
                          .enable(countdown),
                          .reset(clear_memory),
